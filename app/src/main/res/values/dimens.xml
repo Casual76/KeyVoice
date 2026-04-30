@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Keyboard -->
+    <dimen name="keyboard_height">180dp</dimen>
+    <dimen name="keyboard_bottom_bar_height">40dp</dimen>
+
+    <!-- Mic Button -->
+    <dimen name="mic_button_size">64dp</dimen>
+    <dimen name="mic_icon_size">28dp</dimen>
+    <dimen name="mic_button_elevation">4dp</dimen>
+
+    <!-- Audio Level -->
+    <dimen name="audio_level_height">48dp</dimen>
+    <dimen name="audio_level_width">100dp</dimen>
+    <dimen name="audio_bar_width">8dp</dimen>
+    <dimen name="audio_bar_spacing">6dp</dimen>
+    <dimen name="audio_bar_corner_radius">4dp</dimen>
+
+    <!-- Bottom Bar Icons -->
+    <dimen name="bottom_icon_size">24dp</dimen>
+    <dimen name="bottom_icon_padding">10dp</dimen>
+
+    <!-- Margins -->
+    <dimen name="margin_xs">4dp</dimen>
+    <dimen name="margin_sm">8dp</dimen>
+    <dimen name="margin_md">16dp</dimen>
+    <dimen name="margin_lg">24dp</dimen>
+    <dimen name="margin_xl">32dp</dimen>
+
+    <!-- Setup Activity -->
+    <dimen name="setup_card_radius">16dp</dimen>
+    <dimen name="setup_card_elevation">2dp</dimen>
+    <dimen name="setup_icon_size">40dp</dimen>
+</resources>

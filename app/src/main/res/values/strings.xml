@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">KeyVoice</string>
+    <string name="app_description">Tastiera vocale con trascrizione intelligente</string>
+
+    <!-- IME Subtypes -->
+    <string name="subtype_italian">Italiano</string>
+    <string name="subtype_english">English</string>
+
+    <!-- Keyboard States -->
+    <string name="state_idle">Tocca per parlare</string>
+    <string name="state_recording">Registrazione in corso…</string>
+    <string name="state_transcribing">Trascrizione in corso…</string>
+    <string name="state_refining">Correzione in corso…</string>
+    <string name="state_countdown">%d secondi rimanenti</string>
+
+    <!-- Errors -->
+    <string name="error_no_connection">Connessione assente</string>
+    <string name="error_no_api_key">Configura API Key nelle impostazioni</string>
+    <string name="error_invalid_api_key">API Key non valida</string>
+    <string name="error_api_generic">Errore API: %d</string>
+    <string name="error_timeout">Timeout: riprova</string>
+    <string name="error_too_short">Registrazione troppo breve</string>
+    <string name="error_recording_failed">Errore di registrazione</string>
+    <string name="error_no_permission">Permesso microfono necessario</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_api_key">Groq API Key</string>
+    <string name="settings_api_key_hint">Inserisci la tua API Key Groq</string>
+    <string name="settings_api_key_saved">API Key salvata</string>
+    <string name="settings_language">Lingua di trascrizione</string>
+    <string name="settings_llm_model">Modello LLM (Fase 2)</string>
+    <string name="settings_phase2_enabled">Abilita correzione testo (Fase 2)</string>
+    <string name="settings_phase2_description">Usa un modello LLM per correggere punteggiatura, grammatica ed errori di trascrizione</string>
+    <string name="settings_max_duration">Durata massima registrazione</string>
+    <string name="settings_max_duration_value">%d secondi</string>
+    <string name="settings_haptic">Feedback aptico</string>
+    <string name="settings_haptic_description">Vibrazione al tocco del pulsante microfono</string>
+    <string name="settings_save">Salva</string>
+    <string name="settings_saved">Impostazioni salvate</string>
+
+    <!-- Language Options -->
+    <string name="lang_italian">Italiano</string>
+    <string name="lang_english">English</string>
+    <string name="lang_auto">Auto-detect</string>
+
+    <!-- Setup & Dashboard -->
+    <string name="setup_title">KeyVoice Dashboard</string>
+    <string name="setup_welcome">KeyVoice</string>
+    <string name="setup_subtitle">Pannello di controllo della tastiera vocale</string>
+    <string name="setup_step1_title">Stato Tastiera</string>
+    <string name="setup_step1_desc">Attiva o disattiva KeyVoice dalle impostazioni di sistema</string>
+    <string name="setup_step1_button">Gestisci Tastiere</string>
+    <string name="setup_step3_title">Configurazione API Key</string>
+    <string name="setup_step3_desc">Inserisci la tua chiave API Groq (necessaria per il funzionamento)</string>
+    <string name="setup_step3_button">Inserisci API Key</string>
+    <string name="setup_step_done">Attivata</string>
+    <string name="setup_step_pending">Non configurata</string>
+    <string name="setup_all_done">Pronto per l\'uso!</string>
+
+    <string name="settings_whisper_model">Modello Trascrizione (Fase 1)</string>
+    <string name="settings_prompt_title">Prompt di Sistema (Fase 2)</string>
+    <string name="settings_prompt_desc">Istruzioni personalizzate per l\'LLM</string>
+    <string name="settings_prompt_hint">Inserisci le regole di correzione…</string>
+    <string name="settings_vocab_title">Vocabolario Personalizzato</string>
+    <string name="settings_vocab_desc">Parole specifiche separate da virgola (es. nomi propri, termini tecnici)</string>
+    <string name="settings_vocab_hint">Es: KeyVoice, Groq, Whisper, LLM</string>
+    <string name="settings_advanced_title">Impostazioni Avanzate</string>
+    <string name="settings_reset_prompt">Ripristina Default</string>
+    <string name="setup_get_api_key">Ottieni una API Key gratuita su console.groq.com</string>
+
+    <!-- Content Descriptions -->
+    <string name="cd_microphone">Pulsante microfono</string>
+    <string name="cd_settings">Impostazioni</string>
+    <string name="cd_switch_keyboard">Cambia tastiera</string>
+    <string name="cd_undo">Annulla ultimo inserimento</string>
+</resources>

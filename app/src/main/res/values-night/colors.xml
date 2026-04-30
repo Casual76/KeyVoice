@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme color overrides -->
+    <color name="background">#121212</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="surface_variant">#2C2C2E</color>
+    <color name="on_background">#E6E1E5</color>
+    <color name="on_surface">#E6E1E5</color>
+    <color name="on_surface_variant">#CAC4D0</color>
+
+    <!-- Keyboard (Dark) -->
+    <color name="keyboard_background">#1C1C1E</color>
+    <color name="keyboard_bottom_bar">#2C2C2E</color>
+
+    <!-- Text (Dark) -->
+    <color name="text_primary">#E6E1E5</color>
+    <color name="text_secondary">#CAC4D0</color>
+    <color name="text_hint">#938F99</color>
+
+    <!-- Setup Steps (Dark) -->
+    <color name="step_card_bg">#2C2C2E</color>
+</resources>

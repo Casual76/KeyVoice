@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Primary Brand Colors -->
+    <color name="primary">#6C63FF</color>
+    <color name="primary_variant">#5A52D5</color>
+    <color name="on_primary">#FFFFFF</color>
+
+    <!-- Secondary -->
+    <color name="secondary">#03DAC6</color>
+    <color name="secondary_variant">#018786</color>
+    <color name="on_secondary">#000000</color>
+
+    <!-- Background & Surface (Light) -->
+    <color name="background">#FAFAFA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F0EFF5</color>
+    <color name="on_background">#1C1B1F</color>
+    <color name="on_surface">#1C1B1F</color>
+    <color name="on_surface_variant">#49454F</color>
+
+    <!-- Keyboard -->
+    <color name="keyboard_background">#F2F1F6</color>
+    <color name="keyboard_bottom_bar">#E8E7ED</color>
+
+    <!-- Mic Button -->
+    <color name="mic_idle">#6C63FF</color>
+    <color name="mic_recording">#EF4444</color>
+    <color name="mic_icon_tint">#FFFFFF</color>
+
+    <!-- Audio Level Bars -->
+    <color name="audio_bar_low">#6C63FF</color>
+    <color name="audio_bar_mid">#A78BFA</color>
+    <color name="audio_bar_high">#EF4444</color>
+
+    <!-- Status -->
+    <color name="error">#EF4444</color>
+    <color name="success">#22C55E</color>
+    <color name="warning">#F59E0B</color>
+
+    <!-- Text -->
+    <color name="text_primary">#1C1B1F</color>
+    <color name="text_secondary">#49454F</color>
+    <color name="text_hint">#79747E</color>
+
+    <!-- Setup Steps -->
+    <color name="step_done">#22C55E</color>
+    <color name="step_pending">#79747E</color>
+    <color name="step_card_bg">#FFFFFF</color>
+</resources>
