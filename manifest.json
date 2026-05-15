@@ -1,0 +1,56 @@
+{
+  "app": {
+    "id": "keyvoice",
+    "name": "KeyVoice",
+    "description": "Tastiera vocale con trascrizione intelligente",
+    "packageName": "com.keyvoice.app",
+    "iconUrl": "",
+    "category": "Tools",
+    "developer": "Casual76",
+    "screenshots": [],
+    "repository": {
+      "repoOwner": "Casual76",
+      "repoName": "KeyVoice",
+      "manifestPath": "manifest.json",
+      "ref": ""
+    },
+    "stable": {
+      "version": "1.0.2",
+      "releaseDate": "2026-05-10",
+      "changelog": "Migliorata la dashboard con verifica API Key, ripristinato il cambio tastiera, resi piu chiari gli errori Groq, disattivato il logging HTTP in release e aggiornata la documentazione.",
+      "releaseTag": "stable-keyvoice-v1.0.2",
+      "apkAsset": "keyvoice-1.0.2.apk",
+      "exeAsset": "",
+      "sizeBytes": 2167749
+    },
+    "beta": {
+      "version": "1.0.2",
+      "releaseDate": "2026-05-10",
+      "changelog": "Migliorata la dashboard con verifica API Key, ripristinato il cambio tastiera, resi piu chiari gli errori Groq, disattivato il logging HTTP in release e aggiornata la documentazione.",
+      "releaseTag": "stable-keyvoice-v1.0.2",
+      "apkAsset": "keyvoice-1.0.2.apk",
+      "exeAsset": "",
+      "sizeBytes": 2167749
+    },
+    "history": [
+      {
+        "version": "1.0.1",
+        "releaseDate": "2026-05-10",
+        "changelog": "Corretto crash all'avvio causato da preferenze cifrate ripristinate o non leggibili. Disattivato il backup automatico dei dati cifrati e aggiornata la versione a 1.0.1.",
+        "releaseTag": "stable-keyvoice-v1.0.1",
+        "apkAsset": "keyvoice-1.0.1.apk",
+        "exeAsset": "",
+        "sizeBytes": 2164640
+      },
+      {
+        "version": "1.0.0",
+        "releaseDate": "2026-04-30",
+        "changelog": "Release 1.0.0",
+        "releaseTag": "stable-keyvoice-v1.0.0",
+        "apkAsset": "keyvoice-1.0.0.apk",
+        "exeAsset": "",
+        "sizeBytes": 2164178
+      }
+    ]
+  }
+}
