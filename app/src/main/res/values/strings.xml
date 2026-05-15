@@ -10,9 +10,9 @@
 
     <!-- Keyboard States -->
     <string name="state_idle">Tocca per parlare</string>
-    <string name="state_recording">Registrazione in corso…</string>
-    <string name="state_transcribing">Trascrizione in corso…</string>
-    <string name="state_refining">Correzione in corso…</string>
+    <string name="state_recording">Registrazione in corso...</string>
+    <string name="state_transcribing">Trascrizione in corso...</string>
+    <string name="state_refining">Correzione in corso...</string>
     <string name="state_countdown">%d secondi rimanenti</string>
 
     <!-- Errors -->
@@ -30,6 +30,9 @@
     <string name="settings_api_key">Groq API Key</string>
     <string name="settings_api_key_hint">Inserisci la tua API Key Groq</string>
     <string name="settings_api_key_saved">API Key salvata</string>
+    <string name="settings_api_key_test">Verifica API Key</string>
+    <string name="settings_api_key_testing">Verifica...</string>
+    <string name="settings_api_key_valid">API Key valida</string>
     <string name="settings_language">Lingua di trascrizione</string>
     <string name="settings_llm_model">Modello LLM (Fase 2)</string>
     <string name="settings_phase2_enabled">Abilita correzione testo (Fase 2)</string>
@@ -63,7 +66,7 @@
     <string name="settings_whisper_model">Modello Trascrizione (Fase 1)</string>
     <string name="settings_prompt_title">Prompt di Sistema (Fase 2)</string>
     <string name="settings_prompt_desc">Istruzioni personalizzate per l\'LLM</string>
-    <string name="settings_prompt_hint">Inserisci le regole di correzione…</string>
+    <string name="settings_prompt_hint">Inserisci le regole di correzione...</string>
     <string name="settings_vocab_title">Vocabolario Personalizzato</string>
     <string name="settings_vocab_desc">Parole specifiche separate da virgola (es. nomi propri, termini tecnici)</string>
     <string name="settings_vocab_hint">Es: KeyVoice, Groq, Whisper, LLM</string>

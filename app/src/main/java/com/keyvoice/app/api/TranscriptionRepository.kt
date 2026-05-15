@@ -6,6 +6,7 @@ import okhttp3.OkHttpClient
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
+import com.keyvoice.app.BuildConfig
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
@@ -23,15 +24,17 @@ class TranscriptionRepository {
     }
 
     private val apiService: GroqApiService by lazy {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BASIC
-        }
-
         val client = OkHttpClient.Builder()
             .connectTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .writeTimeout(TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .addInterceptor(loggingInterceptor)
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addInterceptor(HttpLoggingInterceptor().apply {
+                        level = HttpLoggingInterceptor.Level.BASIC
+                    })
+                }
+            }
             .build()
 
         Retrofit.Builder()
@@ -98,11 +101,8 @@ class TranscriptionRepository {
                         Result.success(text)
                     }
                 }
-                response.code() == 401 -> {
-                    Result.failure(ApiException("API Key non valida", 401))
-                }
                 else -> {
-                    Result.failure(ApiException("Errore API: ${response.code()}", response.code()))
+                    Result.failure(ApiErrorMapper.fromResponse(response.code(), response.errorBody()))
                 }
             }
         } catch (e: java.net.SocketTimeoutException) {

@@ -36,6 +36,15 @@ interface GroqApiService {
         @Header("Authorization") authorization: String,
         @Body request: ChatCompletionRequest
     ): Response<ChatCompletionResponse>
+
+    /**
+     * Lightweight auth check used by the setup screen.
+     * GET https://api.groq.com/openai/v1/models
+     */
+    @GET("models")
+    suspend fun listModels(
+        @Header("Authorization") authorization: String
+    ): Response<ResponseBody>
 }
 
 // ── Data classes for Chat Completions ──

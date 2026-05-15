@@ -9,6 +9,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.HapticFeedbackConstants
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import androidx.core.content.ContextCompat
 import com.keyvoice.app.R
 import com.keyvoice.app.MainSetupActivity
@@ -89,7 +90,10 @@ class VoiceKeyboardService : InputMethodService() {
             openSettings()
         }
 
-        // Switch keyboard button removed
+        // Switch keyboard button
+        controller.btnKeyboard.setOnClickListener {
+            switchKeyboard()
+        }
 
         // Undo button
         controller.btnUndo.setOnClickListener {
@@ -297,6 +301,14 @@ class VoiceKeyboardService : InputMethodService() {
         }
         startActivity(intent)
         requestHideSelf(0)
+    }
+
+    private fun switchKeyboard() {
+        val switched = switchToNextInputMethod(false)
+        if (!switched) {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            imm.showInputMethodPicker()
+        }
     }
 
     // ─── Error Handling ──────────────────────────────────────────────────

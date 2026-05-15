@@ -16,6 +16,7 @@ class KeyboardViewController(private val rootView: View) {
 
     // UI elements
     val btnMic: ImageButton = rootView.findViewById(R.id.btn_mic)
+    val btnKeyboard: ImageButton = rootView.findViewById(R.id.btn_keyboard)
     val btnSettings: ImageButton = rootView.findViewById(R.id.btn_settings)
     val btnUndo: ImageButton = rootView.findViewById(R.id.btn_undo)
 

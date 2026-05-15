@@ -12,21 +12,28 @@ import android.widget.AutoCompleteTextView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputEditText
+import com.keyvoice.app.api.ApiKeyValidatorRepository
 import com.keyvoice.app.settings.PreferencesManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainSetupActivity : AppCompatActivity() {
 
     private lateinit var prefs: PreferencesManager
+    private val apiKeyValidator = ApiKeyValidatorRepository()
 
     // UI Elements
     private lateinit var tvStatusKeyboard: TextView
     private lateinit var btnManageKeyboards: MaterialButton
     private lateinit var etApiKey: TextInputEditText
     private lateinit var tvApiLink: TextView
+    private lateinit var btnTestApiKey: MaterialButton
     private lateinit var dropdownLanguage: AutoCompleteTextView
     private lateinit var dropdownWhisperModel: AutoCompleteTextView
     private lateinit var etVocabulary: TextInputEditText
@@ -78,6 +85,7 @@ class MainSetupActivity : AppCompatActivity() {
         btnManageKeyboards = findViewById(R.id.btn_manage_keyboards)
         etApiKey = findViewById(R.id.et_api_key)
         tvApiLink = findViewById(R.id.tv_api_link)
+        btnTestApiKey = findViewById(R.id.btn_test_api_key)
         dropdownLanguage = findViewById(R.id.dropdown_language)
         dropdownWhisperModel = findViewById(R.id.dropdown_whisper_model)
         etVocabulary = findViewById(R.id.et_vocabulary)
@@ -142,6 +150,10 @@ class MainSetupActivity : AppCompatActivity() {
             startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://console.groq.com/keys")))
         }
 
+        btnTestApiKey.setOnClickListener {
+            testApiKey()
+        }
+
         switchPhase2.setOnCheckedChangeListener { _, isChecked ->
             containerPhase2Settings.visibility = if (isChecked) View.VISIBLE else View.GONE
         }
@@ -175,6 +187,44 @@ class MainSetupActivity : AppCompatActivity() {
         prefs.hapticFeedback = switchHaptic.isChecked
 
         Toast.makeText(this, getString(R.string.settings_saved), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun testApiKey() {
+        val apiKey = etApiKey.text?.toString()?.trim().orEmpty()
+        if (apiKey.isBlank()) {
+            Toast.makeText(this, getString(R.string.error_no_api_key), Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        btnTestApiKey.isEnabled = false
+        btnTestApiKey.text = getString(R.string.settings_api_key_testing)
+
+        lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                apiKeyValidator.validate(apiKey)
+            }
+
+            btnTestApiKey.isEnabled = true
+            btnTestApiKey.text = getString(R.string.settings_api_key_test)
+
+            result.fold(
+                onSuccess = {
+                    prefs.apiKey = apiKey
+                    Toast.makeText(
+                        this@MainSetupActivity,
+                        getString(R.string.settings_api_key_valid),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                },
+                onFailure = { error ->
+                    Toast.makeText(
+                        this@MainSetupActivity,
+                        error.message ?: getString(R.string.error_api_generic, 0),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+            )
+        }
     }
 
     private fun updateKeyboardStatus() {

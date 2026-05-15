@@ -18,8 +18,8 @@ android {
         applicationId = "com.keyvoice.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.0.2"
     }
 
     signingConfigs {
@@ -28,6 +28,8 @@ android {
             storePassword = localProps["KEYSTORE_PASS"] as String
             keyAlias = localProps["KEY_ALIAS"] as String
             keyPassword = localProps["KEY_PASS"] as String
+            enableV1Signing = true
+            enableV2Signing = true
         }
     }
 
@@ -54,6 +56,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
 }
 

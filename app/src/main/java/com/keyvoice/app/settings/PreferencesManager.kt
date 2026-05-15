@@ -2,6 +2,7 @@ package com.keyvoice.app.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
@@ -10,11 +11,12 @@ import androidx.security.crypto.MasterKey
  * API key is stored securely via EncryptedSharedPreferences.
  * Other settings use standard SharedPreferences.
  */
-class PreferencesManager private constructor(context: Context) {
+class PreferencesManager private constructor(private val context: Context) {
 
     companion object {
         private const val PREFS_NAME = "keyvoice_prefs"
         private const val ENCRYPTED_PREFS_NAME = "keyvoice_secure_prefs"
+        private const val FALLBACK_PREFS_NAME = "keyvoice_secure_fallback_prefs"
 
         private const val KEY_API_KEY = "groq_api_key"
         private const val KEY_LANGUAGE = "transcription_language"
@@ -90,11 +92,28 @@ OUTPUT RULES
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     private val encryptedPrefs: SharedPreferences by lazy {
+        createEncryptedPrefs()
+    }
+
+    private fun createEncryptedPrefs(): SharedPreferences {
+        return runCatching {
+            buildEncryptedPrefs()
+        }.recoverCatching { firstError ->
+            Log.w("PreferencesManager", "Encrypted preferences were unreadable; resetting secure prefs.", firstError)
+            context.deleteSharedPreferences(ENCRYPTED_PREFS_NAME)
+            buildEncryptedPrefs()
+        }.getOrElse { secondError ->
+            Log.e("PreferencesManager", "Encrypted preferences unavailable; using fallback prefs.", secondError)
+            context.getSharedPreferences(FALLBACK_PREFS_NAME, Context.MODE_PRIVATE)
+        }
+    }
+
+    private fun buildEncryptedPrefs(): SharedPreferences {
         val masterKey = MasterKey.Builder(context)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
             .build()
 
-        EncryptedSharedPreferences.create(
+        return EncryptedSharedPreferences.create(
             context,
             ENCRYPTED_PREFS_NAME,
             masterKey,
@@ -103,10 +122,26 @@ OUTPUT RULES
         )
     }
 
-    /** Groq API Key — stored encrypted */
+    /** Groq API Key - stored encrypted */
     var apiKey: String
-        get() = encryptedPrefs.getString(KEY_API_KEY, "") ?: ""
-        set(value) = encryptedPrefs.edit().putString(KEY_API_KEY, value).apply()
+        get() = runCatching {
+            encryptedPrefs.getString(KEY_API_KEY, "") ?: ""
+        }.getOrElse { error ->
+            Log.w("PreferencesManager", "Unable to read stored API key; clearing secure prefs.", error)
+            context.deleteSharedPreferences(ENCRYPTED_PREFS_NAME)
+            ""
+        }
+        set(value) {
+            runCatching {
+                encryptedPrefs.edit().putString(KEY_API_KEY, value).apply()
+            }.onFailure { error ->
+                Log.e("PreferencesManager", "Unable to write encrypted API key; using fallback prefs.", error)
+                context.getSharedPreferences(FALLBACK_PREFS_NAME, Context.MODE_PRIVATE)
+                    .edit()
+                    .putString(KEY_API_KEY, value)
+                    .apply()
+            }
+        }
 
     /** Transcription language ISO 639-1 code, or "auto" for auto-detect */
     var language: String
