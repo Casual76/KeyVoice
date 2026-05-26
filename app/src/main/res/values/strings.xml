@@ -13,6 +13,11 @@
     <string name="state_recording">Registrazione in corso...</string>
     <string name="state_transcribing">Trascrizione in corso...</string>
     <string name="state_refining">Correzione in corso...</string>
+    <string name="state_rewriting">Riformulazione...</string>
+    <string name="state_preview">Controlla prima di inserire</string>
+    <string name="state_quick_insert">Inserimento rapido senza correzione AI</string>
+    <string name="state_network_slow">Rete lenta, attendo ancora...</string>
+    <string name="state_network_waiting">Attesa prolungata, non chiudere la tastiera...</string>
     <string name="state_countdown">%d secondi rimanenti</string>
 
     <!-- Errors -->
@@ -36,7 +41,10 @@
     <string name="settings_language">Lingua di trascrizione</string>
     <string name="settings_llm_model">Modello LLM (Fase 2)</string>
     <string name="settings_phase2_enabled">Abilita correzione testo (Fase 2)</string>
-    <string name="settings_phase2_description">Usa un modello LLM per correggere punteggiatura, grammatica ed errori di trascrizione</string>
+    <string name="settings_phase2_description">Usa un modello LLM per correggere punteggiatura, grammatica ed errori. Se disattivata, resta attiva la punteggiatura parlata di base.</string>
+    <string name="settings_prompt_preset">Preset prompt</string>
+    <string name="settings_preview_long_text">Anteprima testi lunghi</string>
+    <string name="settings_preview_long_text_description">Mostra un editor prima di inserire dettature lunghe</string>
     <string name="settings_max_duration">Durata massima registrazione</string>
     <string name="settings_max_duration_value">%d secondi</string>
     <string name="settings_haptic">Feedback aptico</string>
@@ -68,11 +76,34 @@
     <string name="settings_prompt_desc">Istruzioni personalizzate per l\'LLM</string>
     <string name="settings_prompt_hint">Inserisci le regole di correzione...</string>
     <string name="settings_vocab_title">Vocabolario Personalizzato</string>
-    <string name="settings_vocab_desc">Parole specifiche separate da virgola (es. nomi propri, termini tecnici)</string>
+    <string name="settings_vocab_desc">Aggiungi parole specifiche come nomi propri o termini tecnici. KeyVoice usa anche le parole apprese dalle correzioni.</string>
     <string name="settings_vocab_hint">Es: KeyVoice, Groq, Whisper, LLM</string>
+    <string name="settings_vocab_add">Aggiungi</string>
+    <string name="settings_vocab_manual">Parole manuali</string>
+    <string name="settings_vocab_learned">Apprese automaticamente</string>
+    <string name="settings_vocab_learned_empty">Nessuna parola appresa</string>
+    <string name="settings_vocab_clear_learned">Svuota apprese</string>
     <string name="settings_advanced_title">Impostazioni Avanzate</string>
     <string name="settings_reset_prompt">Ripristina Default</string>
     <string name="setup_get_api_key">Ottieni una API Key gratuita su console.groq.com</string>
+
+    <!-- Keyboard Actions -->
+    <string name="preview_hint">Modifica il testo prima di inserirlo</string>
+    <string name="action_insert">Inserisci</string>
+    <string name="action_cancel">Annulla</string>
+    <string name="action_undo">Annulla</string>
+    <string name="action_rewrite_improve">Migliora</string>
+    <string name="action_rewrite_more">Altro</string>
+    <string name="action_history">Cronologia</string>
+    <string name="action_history_clear">Svuota cronologia</string>
+    <string name="feedback_learned_one">Aggiunto: %s</string>
+    <string name="feedback_learned_many">Aggiunte %d parole</string>
+    <string name="feedback_phase2_fallback">Correzione non disponibile, inserito testo grezzo</string>
+    <string name="feedback_phase2_disabled">Fase 2 disattivata: usata punteggiatura parlata</string>
+    <string name="feedback_undo_unavailable">Annulla non disponibile: il testo e\' stato modificato</string>
+    <string name="feedback_rewrite_unavailable">Riformulazione non disponibile per questo testo</string>
+    <string name="feedback_history_empty">Cronologia vuota</string>
+    <string name="feedback_history_cleared">Cronologia svuotata</string>
 
     <!-- Content Descriptions -->
     <string name="cd_microphone">Pulsante microfono</string>

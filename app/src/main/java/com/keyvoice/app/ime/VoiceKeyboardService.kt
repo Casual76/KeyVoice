@@ -7,45 +7,69 @@ import android.inputmethodservice.InputMethodService
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.View
+import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputMethodManager
+import android.widget.LinearLayout
+import android.widget.PopupWindow
+import android.widget.TextView
 import androidx.core.content.ContextCompat
-import com.keyvoice.app.R
 import com.keyvoice.app.MainSetupActivity
+import com.keyvoice.app.R
 import com.keyvoice.app.api.RefinementRepository
 import com.keyvoice.app.api.TranscriptionRepository
 import com.keyvoice.app.audio.AudioRecorder
+import com.keyvoice.app.settings.DictationHistoryItem
+import com.keyvoice.app.settings.DictationHistoryStore
 import com.keyvoice.app.settings.PreferencesManager
 import com.keyvoice.app.ui.KeyboardViewController
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-/**
- * Main Input Method Service for KeyVoice.
- *
- * This service implements the complete voice-to-text pipeline:
- * 1. Audio recording via MediaRecorder
- * 2. Phase 1: Whisper transcription via Groq API
- * 3. Phase 2: LLM text refinement via Groq API (optional)
- * 4. Text insertion via InputConnection
- */
 class VoiceKeyboardService : InputMethodService() {
+
+    companion object {
+        private const val TAG = "VoiceKeyboardService"
+        private const val LEARNING_CONTEXT_CHARS = 80
+        private const val LEARNING_MAX_GROWTH_CHARS = 120
+        private const val PREVIEW_MIN_CHARS = 240
+        private const val PREVIEW_MIN_WORDS = 35
+        private const val SLOW_NETWORK_DELAY_MS = 8_000L
+        private const val VERY_SLOW_NETWORK_DELAY_MS = 20_000L
+        private const val FEEDBACK_DURATION_MS = 4_000L
+    }
 
     private lateinit var prefs: PreferencesManager
     private lateinit var audioRecorder: AudioRecorder
     private lateinit var transcriptionRepo: TranscriptionRepository
     private lateinit var refinementRepo: RefinementRepository
+    private lateinit var historyStore: DictationHistoryStore
 
     private var viewController: KeyboardViewController? = null
     private var serviceScope: CoroutineScope? = null
 
-    // State tracking
     private var currentState = KeyboardViewController.State.IDLE
     private var lastInsertedTextLength = 0
     private var canUndo = false
+    private var pendingInsertion: PendingInsertion? = null
+    private var trackedInsertion: TrackedInsertion? = null
+    private var latestSelectionStart = -1
+    private var latestSelectionEnd = -1
+    private var pendingPreview: PendingDictation? = null
+    private var lastInsertion: LastInsertion? = null
+    private var lastLearnedTerms: List<String> = emptyList()
 
-    // Audio level monitoring
     private val amplitudeHandler = Handler(Looper.getMainLooper())
+    private val uiHandler = Handler(Looper.getMainLooper())
+
     private val amplitudeRunnable = object : Runnable {
         override fun run() {
             if (audioRecorder.isCurrentlyRecording()) {
@@ -56,8 +80,9 @@ class VoiceKeyboardService : InputMethodService() {
         }
     }
 
-    // Recording duration timer
     private var recordingTimer: CountDownTimer? = null
+    private var slowNetworkRunnable: Runnable? = null
+    private var verySlowNetworkRunnable: Runnable? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -65,6 +90,7 @@ class VoiceKeyboardService : InputMethodService() {
         audioRecorder = AudioRecorder(this)
         transcriptionRepo = TranscriptionRepository()
         refinementRepo = RefinementRepository()
+        historyStore = DictationHistoryStore(this)
         serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     }
 
@@ -73,11 +99,11 @@ class VoiceKeyboardService : InputMethodService() {
         val controller = KeyboardViewController(view)
         viewController = controller
 
-        // Set initial state
         controller.setState(KeyboardViewController.State.IDLE)
         controller.hideUndo()
+        controller.hidePostInsertActions()
+        controller.hideLearningFeedback()
 
-        // Mic button: toggle recording
         controller.btnMic.setOnClickListener {
             if (prefs.hapticFeedback) {
                 it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
@@ -85,20 +111,15 @@ class VoiceKeyboardService : InputMethodService() {
             handleMicClick()
         }
 
-        // Settings button
-        controller.btnSettings.setOnClickListener {
-            openSettings()
-        }
-
-        // Switch keyboard button
-        controller.btnKeyboard.setOnClickListener {
-            switchKeyboard()
-        }
-
-        // Undo button
-        controller.btnUndo.setOnClickListener {
-            undoLastInsert()
-        }
+        controller.btnSettings.setOnClickListener { openSettings() }
+        controller.btnKeyboard.setOnClickListener { switchKeyboard() }
+        controller.btnUndo.setOnClickListener { undoLastInsert() }
+        controller.btnPreviewInsert.setOnClickListener { confirmPreview() }
+        controller.btnPreviewCancel.setOnClickListener { cancelPreview() }
+        controller.btnRewrite.setOnClickListener { rewriteLastInsertion(RewriteAction.IMPROVE) }
+        controller.btnRewriteMore.setOnClickListener { showRewriteMenu() }
+        controller.btnHistory.setOnClickListener { showHistoryPopup() }
+        controller.btnLearningUndo.setOnClickListener { undoLastLearning() }
 
         return view
     }
@@ -107,32 +128,27 @@ class VoiceKeyboardService : InputMethodService() {
         serviceScope?.cancel()
         serviceScope = null
         amplitudeHandler.removeCallbacks(amplitudeRunnable)
+        clearApiStatusHints()
         recordingTimer?.cancel()
         audioRecorder.release()
         super.onDestroy()
     }
 
-    // ─── Mic Click Handler ───────────────────────────────────────────────
-
     private fun handleMicClick() {
         when (currentState) {
             KeyboardViewController.State.IDLE,
-            KeyboardViewController.State.ERROR -> {
-                startRecording()
-            }
-            KeyboardViewController.State.RECORDING -> {
-                stopRecordingAndProcess()
+            KeyboardViewController.State.ERROR -> startRecording()
+            KeyboardViewController.State.RECORDING -> stopRecordingAndProcess()
+            KeyboardViewController.State.PREVIEW -> {
+                // Preview owns the visible actions; ignore mic taps until insert/cancel.
             }
             else -> {
-                // Ignore clicks during processing
+                // Ignore clicks during processing.
             }
         }
     }
 
-    // ─── Recording ───────────────────────────────────────────────────────
-
     private fun startRecording() {
-        // Check permission
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
         ) {
@@ -140,7 +156,6 @@ class VoiceKeyboardService : InputMethodService() {
             return
         }
 
-        // Check API key
         if (!prefs.hasApiKey()) {
             showError(getString(R.string.error_no_api_key))
             return
@@ -151,57 +166,45 @@ class VoiceKeyboardService : InputMethodService() {
             currentState = KeyboardViewController.State.RECORDING
             viewController?.setState(KeyboardViewController.State.RECORDING)
             viewController?.hideUndo()
+            viewController?.hidePostInsertActions()
+            viewController?.hideLearningFeedback()
             canUndo = false
 
-            // Start amplitude monitoring
             amplitudeHandler.post(amplitudeRunnable)
-
-            // Start max duration timer
             startDurationTimer()
-
         } catch (e: Exception) {
             showError(getString(R.string.error_recording_failed))
         }
     }
 
     private fun stopRecordingAndProcess() {
-        // Stop timer and amplitude monitoring
         recordingTimer?.cancel()
         amplitudeHandler.removeCallbacks(amplitudeRunnable)
 
         val result = audioRecorder.stopRecording()
 
         result.onSuccess { audioFile ->
-            // Start the processing pipeline
             processAudio(audioFile)
         }.onFailure { error ->
             when (error) {
-                is AudioRecorder.RecordingTooShortException -> {
-                    showError(getString(R.string.error_too_short))
-                }
-                else -> {
-                    showError(getString(R.string.error_recording_failed))
-                }
+                is AudioRecorder.RecordingTooShortException -> showError(getString(R.string.error_too_short))
+                else -> showError(getString(R.string.error_recording_failed))
             }
         }
     }
 
-    // ─── Duration Timer ──────────────────────────────────────────────────
-
     private fun startDurationTimer() {
         val maxDurationMs = prefs.maxRecordingDuration * 1000L
-        val countdownStartMs = 10_000L // Show countdown in last 10 seconds
+        val countdownStartMs = 10_000L
 
         recordingTimer = object : CountDownTimer(maxDurationMs, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 if (millisUntilFinished <= countdownStartMs) {
-                    val secondsRemaining = (millisUntilFinished / 1000).toInt()
-                    viewController?.showCountdown(secondsRemaining)
+                    viewController?.showCountdown((millisUntilFinished / 1000).toInt())
                 }
             }
 
             override fun onFinish() {
-                // Auto-stop recording when max duration reached
                 viewController?.hideCountdown()
                 if (currentState == KeyboardViewController.State.RECORDING) {
                     stopRecordingAndProcess()
@@ -210,8 +213,6 @@ class VoiceKeyboardService : InputMethodService() {
         }.start()
     }
 
-    // ─── Processing Pipeline ─────────────────────────────────────────────
-
     private fun processAudio(audioFile: java.io.File) {
         val apiKey = prefs.apiKey
         val language = prefs.getWhisperLanguageParam()
@@ -219,20 +220,21 @@ class VoiceKeyboardService : InputMethodService() {
         val whisperModel = prefs.whisperModel
         val llmModel = prefs.llmModel
         val isPhase2Enabled = prefs.isPhase2Enabled
-        val systemPrompt = prefs.systemPrompt
-        val vocabulary = prefs.vocabulary
+        val systemPrompt = prefs.getResolvedSystemPrompt()
+        val vocabulary = prefs.effectiveVocabulary
+        val promptPreset = prefs.promptPreset
 
         serviceScope?.launch {
             try {
-                // ── Phase 1: Whisper Transcription ──
                 currentState = KeyboardViewController.State.PROCESSING_PHASE1
                 viewController?.setState(KeyboardViewController.State.PROCESSING_PHASE1)
+                startApiStatusHints()
 
                 val transcriptionResult = withContext(Dispatchers.IO) {
                     transcriptionRepo.transcribe(audioFile, apiKey, whisperModel, language, vocabulary)
                 }
 
-                // Cleanup audio file after upload
+                clearApiStatusHints()
                 audioRecorder.cleanupFile()
 
                 val rawText = transcriptionResult.getOrElse { error ->
@@ -240,60 +242,519 @@ class VoiceKeyboardService : InputMethodService() {
                     return@launch
                 }
 
-                // ── Phase 2: LLM Refinement (optional) ──
-                val finalText: String
+                var finalText = rawText
+                var phase2Used = false
+                var notice: String? = null
+
                 if (isPhase2Enabled) {
                     currentState = KeyboardViewController.State.PROCESSING_PHASE2
                     viewController?.setState(KeyboardViewController.State.PROCESSING_PHASE2)
+                    startApiStatusHints()
 
                     val refinementResult = withContext(Dispatchers.IO) {
                         refinementRepo.refine(rawText, apiKey, llmModel, languageFullName, systemPrompt)
                     }
 
-                    finalText = refinementResult.getOrElse { error ->
-                        // If Phase 2 fails, fall back to raw transcription
-                        rawText
-                    }
+                    clearApiStatusHints()
+                    refinementResult.fold(
+                        onSuccess = {
+                            finalText = it
+                            phase2Used = true
+                        },
+                        onFailure = {
+                            finalText = SpokenPunctuationNormalizer.normalize(rawText)
+                            notice = getString(R.string.feedback_phase2_fallback)
+                        }
+                    )
                 } else {
-                    finalText = rawText
+                    viewController?.showTransientStatus(getString(R.string.state_quick_insert))
+                    finalText = SpokenPunctuationNormalizer.normalize(rawText)
+                    notice = getString(R.string.feedback_phase2_disabled)
                 }
 
-                // ── Insert text ──
-                insertText(finalText)
+                val pending = PendingDictation(
+                    rawText = rawText,
+                    finalText = finalText,
+                    phase2Used = phase2Used,
+                    promptPreset = promptPreset.id
+                )
 
-                // Return to idle
-                currentState = KeyboardViewController.State.IDLE
-                viewController?.setState(KeyboardViewController.State.IDLE)
-
+                if (shouldPreview(finalText)) {
+                    pendingPreview = pending
+                    currentState = KeyboardViewController.State.PREVIEW
+                    viewController?.setPreviewText(finalText)
+                    viewController?.setState(KeyboardViewController.State.PREVIEW)
+                    viewController?.hidePostInsertActions()
+                    notice?.let { showNotice(it) }
+                } else {
+                    commitDictation(pending)
+                    currentState = KeyboardViewController.State.IDLE
+                    viewController?.setState(KeyboardViewController.State.IDLE)
+                    notice?.let { showNotice(it) }
+                }
             } catch (e: CancellationException) {
-                throw e // Don't catch cancellation
+                throw e
             } catch (e: Exception) {
+                clearApiStatusHints()
                 showError(e.message ?: getString(R.string.error_api_generic, 0))
             }
         }
     }
 
-    // ─── Text Insertion ──────────────────────────────────────────────────
+    private fun confirmPreview() {
+        val pending = pendingPreview ?: return
+        val edited = viewController?.getPreviewText()?.trim().orEmpty()
+        pendingPreview = null
 
-    private fun insertText(text: String) {
-        val ic = currentInputConnection ?: return
-        ic.commitText(text, 1) // 1 = cursor position after text
-        lastInsertedTextLength = text.length
+        if (edited.isBlank()) {
+            currentState = KeyboardViewController.State.IDLE
+            viewController?.setState(KeyboardViewController.State.IDLE)
+            return
+        }
+
+        commitDictation(pending.copy(finalText = edited))
+        currentState = KeyboardViewController.State.IDLE
+        viewController?.setState(KeyboardViewController.State.IDLE)
+    }
+
+    private fun cancelPreview() {
+        pendingPreview = null
+        currentState = KeyboardViewController.State.IDLE
+        viewController?.setState(KeyboardViewController.State.IDLE)
+    }
+
+    private fun shouldPreview(text: String): Boolean {
+        if (!prefs.previewLongTextEnabled) return false
+        val wordCount = Regex("\\S+").findAll(text).count()
+        return text.length >= PREVIEW_MIN_CHARS || wordCount >= PREVIEW_MIN_WORDS
+    }
+
+    private fun commitDictation(pending: PendingDictation) {
+        val inserted = insertText(
+            text = pending.finalText,
+            rawText = pending.rawText,
+            finalText = pending.finalText,
+            phase2Used = pending.phase2Used,
+            promptPreset = pending.promptPreset,
+            saveHistory = true
+        )
+
+        if (inserted.isNotBlank()) {
+            viewController?.showPostInsertActions()
+        }
+    }
+
+    private fun insertText(
+        text: String,
+        rawText: String = text,
+        finalText: String = text,
+        phase2Used: Boolean = false,
+        promptPreset: String = prefs.promptPreset.id,
+        saveHistory: Boolean = true
+    ): String {
+        val ic = currentInputConnection ?: return ""
+        val selectedText = ic.getSelectedText(0)?.toString().orEmpty()
+        val beforeContext = ic.getTextBeforeCursor(LEARNING_CONTEXT_CHARS, 0)?.toString().orEmpty()
+        val afterContext = ic.getTextAfterCursor(LEARNING_CONTEXT_CHARS, 0)?.toString().orEmpty()
+        val insertedText = InsertionFormatter.format(
+            rawText = text,
+            context = InsertionFormatter.Context(
+                beforeCursor = beforeContext,
+                afterCursor = afterContext,
+                selectedText = selectedText
+            )
+        )
+
+        if (insertedText.isBlank()) return ""
+
+        pendingInsertion = PendingInsertion(
+            text = insertedText,
+            beforeContext = beforeContext.takeLast(LEARNING_CONTEXT_CHARS),
+            afterContext = afterContext.take(LEARNING_CONTEXT_CHARS)
+        )
+
+        ic.commitText(insertedText, 1)
+        capturePendingInsertionFromExtractedText()
+
+        lastInsertedTextLength = insertedText.length
         canUndo = true
+        lastInsertion = LastInsertion(
+            insertedText = insertedText,
+            rawText = rawText,
+            finalText = finalText,
+            promptPreset = promptPreset,
+            phase2Used = phase2Used
+        )
+
         viewController?.showUndo()
+        viewController?.showPostInsertActions()
+
+        if (saveHistory) {
+            historyStore.add(
+                DictationHistoryItem(
+                    id = System.currentTimeMillis().toString(),
+                    createdAtMillis = System.currentTimeMillis(),
+                    rawText = rawText,
+                    finalText = finalText,
+                    insertedText = insertedText,
+                    promptPreset = promptPreset,
+                    phase2Used = phase2Used
+                )
+            )
+        }
+
+        return insertedText
     }
 
     private fun undoLastInsert() {
-        if (!canUndo || lastInsertedTextLength <= 0) return
+        val insertion = lastInsertion
+        if (!canUndo || insertion == null || lastInsertedTextLength <= 0) return
+
+        if (!isInsertionBeforeCursor(insertion.insertedText)) {
+            showNotice(getString(R.string.feedback_undo_unavailable))
+            disableUndoForModifiedInsertion()
+            return
+        }
 
         val ic = currentInputConnection ?: return
         ic.deleteSurroundingText(lastInsertedTextLength, 0)
         lastInsertedTextLength = 0
         canUndo = false
+        lastInsertion = null
+        pendingInsertion = null
+        trackedInsertion = null
         viewController?.hideUndo()
+        viewController?.hidePostInsertActions()
     }
 
-    // ─── Settings ────────────────────────────────────────────────────────
+    private fun rewriteLastInsertion(action: RewriteAction) {
+        val insertion = lastInsertion
+        if (insertion == null || !canUndo) {
+            showNotice(getString(R.string.feedback_rewrite_unavailable))
+            return
+        }
+
+        if (!prefs.hasApiKey()) {
+            showError(getString(R.string.error_no_api_key))
+            return
+        }
+
+        if (!isInsertionBeforeCursor(insertion.insertedText)) {
+            showNotice(getString(R.string.feedback_rewrite_unavailable))
+            disableUndoForModifiedInsertion()
+            return
+        }
+
+        serviceScope?.launch {
+            currentState = KeyboardViewController.State.REWRITING
+            viewController?.setState(KeyboardViewController.State.REWRITING)
+            startApiStatusHints()
+
+            val result = withContext(Dispatchers.IO) {
+                refinementRepo.rewrite(
+                    text = insertion.insertedText.trim(),
+                    apiKey = prefs.apiKey,
+                    model = prefs.llmModel,
+                    language = prefs.getLanguageFullName(),
+                    instruction = getRewriteInstruction(action)
+                )
+            }
+
+            clearApiStatusHints()
+
+            result.fold(
+                onSuccess = { rewritten ->
+                    replaceLastInsertion(rewritten, insertion, action)
+                    currentState = KeyboardViewController.State.IDLE
+                    viewController?.setState(KeyboardViewController.State.IDLE)
+                    viewController?.showPostInsertActions()
+                },
+                onFailure = { error ->
+                    currentState = KeyboardViewController.State.IDLE
+                    viewController?.setState(KeyboardViewController.State.IDLE)
+                    viewController?.showPostInsertActions()
+                    showNotice(error.message ?: getString(R.string.error_api_generic, 0))
+                }
+            )
+        }
+    }
+
+    private fun replaceLastInsertion(
+        rewrittenText: String,
+        previous: LastInsertion,
+        action: RewriteAction
+    ) {
+        val ic = currentInputConnection ?: return
+        ic.deleteSurroundingText(previous.insertedText.length, 0)
+        lastInsertedTextLength = 0
+        canUndo = false
+        pendingInsertion = null
+        trackedInsertion = null
+
+        insertText(
+            text = rewrittenText,
+            rawText = previous.rawText,
+            finalText = rewrittenText,
+            phase2Used = true,
+            promptPreset = "${previous.promptPreset}:${action.id}",
+            saveHistory = true
+        )
+    }
+
+    private fun showRewriteMenu() {
+        val controller = viewController ?: return
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundResource(R.drawable.bg_keyboard_panel)
+            setPadding(dp(8), dp(8), dp(8), dp(8))
+        }
+        var popup: PopupWindow? = null
+
+        listOf(RewriteAction.SHORTER, RewriteAction.FORMAL, RewriteAction.CASUAL).forEach { action ->
+            container.addView(menuText(action.label) {
+                popup?.dismiss()
+                rewriteLastInsertion(action)
+            })
+        }
+
+        popup = PopupWindow(container, dp(220), LinearLayout.LayoutParams.WRAP_CONTENT, true)
+        popup.showAsDropDown(controller.btnRewriteMore, -dp(150), -dp(170))
+    }
+
+    private fun showHistoryPopup() {
+        val controller = viewController ?: return
+        val items = historyStore.getItems()
+
+        if (items.isEmpty()) {
+            showNotice(getString(R.string.feedback_history_empty))
+            return
+        }
+
+        val container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundResource(R.drawable.bg_keyboard_panel)
+            setPadding(dp(10), dp(8), dp(10), dp(8))
+        }
+        var popup: PopupWindow? = null
+
+        items.forEach { item ->
+            container.addView(menuText(item.insertedText.previewLine()) {
+                popup?.dismiss()
+                insertText(item.insertedText, saveHistory = false)
+            })
+        }
+
+        container.addView(menuText(getString(R.string.action_history_clear)) {
+            popup?.dismiss()
+            historyStore.clear()
+            showNotice(getString(R.string.feedback_history_cleared))
+        })
+
+        popup = PopupWindow(container, controller.rootView.width.coerceAtLeast(dp(280)), LinearLayout.LayoutParams.WRAP_CONTENT, true)
+        popup.showAtLocation(controller.rootView, Gravity.BOTTOM, 0, dp(48))
+    }
+
+    private fun menuText(text: String, onClick: () -> Unit): TextView {
+        return TextView(this).apply {
+            this.text = text
+            textSize = 14f
+            setTextColor(ContextCompat.getColor(context, R.color.text_primary))
+            setPadding(dp(12), dp(10), dp(12), dp(10))
+            setOnClickListener {
+                onClick()
+            }
+        }
+    }
+
+    private fun undoLastLearning() {
+        if (lastLearnedTerms.isEmpty()) return
+        prefs.removeLearnedVocabularyTerms(lastLearnedTerms)
+        lastLearnedTerms = emptyList()
+        viewController?.hideLearningFeedback()
+    }
+
+    private fun isInsertionBeforeCursor(insertedText: String): Boolean {
+        val beforeCursor = currentInputConnection
+            ?.getTextBeforeCursor(insertedText.length, 0)
+            ?.toString()
+            .orEmpty()
+        return beforeCursor == insertedText
+    }
+
+    private fun capturePendingInsertionAtCursor(cursorPosition: Int) {
+        val pending = pendingInsertion ?: return
+        if (cursorPosition < pending.text.length) return
+
+        trackedInsertion = TrackedInsertion(
+            originalText = pending.text,
+            lastObservedText = pending.text,
+            startOffset = cursorPosition - pending.text.length,
+            endOffset = cursorPosition,
+            beforeContext = pending.beforeContext,
+            afterContext = pending.afterContext
+        )
+        pendingInsertion = null
+    }
+
+    private fun capturePendingInsertionFromExtractedText() {
+        val pending = pendingInsertion ?: return
+        val extractedText = currentInputConnection
+            ?.getExtractedText(ExtractedTextRequest(), 0)
+            ?: return
+
+        val cursorPosition = resolveExtractedOffset(
+            startOffset = extractedText.startOffset,
+            textLength = extractedText.text?.length ?: 0,
+            offset = extractedText.selectionEnd
+        )
+        if (cursorPosition >= pending.text.length) {
+            capturePendingInsertionAtCursor(cursorPosition)
+        }
+    }
+
+    private fun learnFromTrackedInsertion() {
+        val tracked = trackedInsertion ?: return
+        val extractedText = currentInputConnection
+            ?.getExtractedText(ExtractedTextRequest(), 0)
+            ?: return
+
+        val text = extractedText.text?.toString() ?: return
+        val segment = findTrackedSegment(text, extractedText.startOffset, tracked) ?: return
+        val observedText = segment.text
+
+        if (observedText == tracked.lastObservedText) return
+
+        val appendedText = observedText.removePrefix(tracked.lastObservedText)
+        val looksLikeContinuation = observedText.startsWith(tracked.lastObservedText) &&
+            appendedText.any { it.isWhitespace() } &&
+            tracked.afterContext.isEmpty()
+
+        if (looksLikeContinuation) return
+
+        if (observedText != tracked.originalText) {
+            val learnedTerms = TextCorrectionLearner.extractNewTerms(tracked.originalText, observedText)
+            val additions = prefs.addLearnedVocabularyTerms(learnedTerms)
+            if (additions.isNotEmpty()) {
+                lastLearnedTerms = additions
+                Log.d(TAG, "Learned vocabulary terms: ${additions.joinToString()}")
+                showLearningFeedback(additions)
+            }
+            disableUndoForModifiedInsertion()
+        }
+
+        tracked.lastObservedText = observedText
+        tracked.endOffset = segment.absoluteEnd
+    }
+
+    private fun findTrackedSegment(
+        extractedText: String,
+        extractedStartOffset: Int,
+        tracked: TrackedInsertion
+    ): TrackedSegment? {
+        if (extractedText.isEmpty()) return null
+
+        val expectedStart = (tracked.startOffset - extractedStartOffset)
+            .coerceIn(0, extractedText.length)
+        var start = expectedStart
+
+        if (tracked.beforeContext.isNotEmpty()) {
+            val beforeIndex = extractedText.lastIndexOf(tracked.beforeContext, expectedStart)
+            if (beforeIndex >= 0) {
+                start = beforeIndex + tracked.beforeContext.length
+            }
+        }
+
+        val end = if (tracked.afterContext.isNotEmpty()) {
+            val afterIndex = extractedText.indexOf(tracked.afterContext, start)
+            if (afterIndex < 0) return null
+            afterIndex
+        } else {
+            val expectedEnd = (tracked.endOffset - extractedStartOffset)
+                .coerceIn(start, extractedText.length)
+            val selectionEnd = if (latestSelectionEnd >= tracked.startOffset) {
+                (latestSelectionEnd - extractedStartOffset)
+                    .coerceIn(start, extractedText.length)
+            } else {
+                expectedEnd
+            }
+            maxOf(expectedEnd, selectionEnd)
+                .coerceAtMost(start + tracked.originalText.length + LEARNING_MAX_GROWTH_CHARS)
+                .coerceAtMost(extractedText.length)
+        }
+
+        if (end < start) return null
+
+        return TrackedSegment(
+            text = extractedText.substring(start, end),
+            absoluteEnd = extractedStartOffset + end
+        )
+    }
+
+    private fun resolveExtractedOffset(startOffset: Int, textLength: Int, offset: Int): Int {
+        return when {
+            offset < 0 -> offset
+            startOffset > 0 && offset <= textLength -> startOffset + offset
+            else -> offset
+        }
+    }
+
+    private fun disableUndoForModifiedInsertion() {
+        if (!canUndo) return
+        lastInsertedTextLength = 0
+        canUndo = false
+        viewController?.hideUndo()
+        viewController?.hidePostInsertActions()
+    }
+
+    private fun showLearningFeedback(additions: List<String>) {
+        val message = if (additions.size == 1) {
+            getString(R.string.feedback_learned_one, additions.first())
+        } else {
+            getString(R.string.feedback_learned_many, additions.size)
+        }
+        viewController?.showLearningFeedback(message)
+        uiHandler.postDelayed({
+            if (lastLearnedTerms == additions) {
+                viewController?.hideLearningFeedback()
+            }
+        }, FEEDBACK_DURATION_MS)
+    }
+
+    private fun showNotice(message: String) {
+        viewController?.showFeedback(message, showUndoAction = false)
+        uiHandler.postDelayed({
+            viewController?.hideLearningFeedback()
+        }, FEEDBACK_DURATION_MS)
+    }
+
+    private fun startApiStatusHints() {
+        clearApiStatusHints()
+        slowNetworkRunnable = Runnable {
+            viewController?.showSecondaryStatus(getString(R.string.state_network_slow))
+        }
+        verySlowNetworkRunnable = Runnable {
+            viewController?.showSecondaryStatus(getString(R.string.state_network_waiting))
+        }
+        uiHandler.postDelayed(slowNetworkRunnable!!, SLOW_NETWORK_DELAY_MS)
+        uiHandler.postDelayed(verySlowNetworkRunnable!!, VERY_SLOW_NETWORK_DELAY_MS)
+    }
+
+    private fun clearApiStatusHints() {
+        slowNetworkRunnable?.let { uiHandler.removeCallbacks(it) }
+        verySlowNetworkRunnable?.let { uiHandler.removeCallbacks(it) }
+        slowNetworkRunnable = null
+        verySlowNetworkRunnable = null
+        viewController?.showSecondaryStatus(null)
+    }
+
+    private fun getRewriteInstruction(action: RewriteAction): String {
+        return when (action) {
+            RewriteAction.IMPROVE -> "Improve clarity and flow while keeping the same tone."
+            RewriteAction.SHORTER -> "Make the text shorter and more concise."
+            RewriteAction.FORMAL -> "Rewrite the text in a more formal and professional tone."
+            RewriteAction.CASUAL -> "Rewrite the text in a natural, conversational tone."
+        }
+    }
 
     private fun openSettings() {
         val intent = Intent(this, MainSetupActivity::class.java).apply {
@@ -311,35 +772,34 @@ class VoiceKeyboardService : InputMethodService() {
         }
     }
 
-    // ─── Error Handling ──────────────────────────────────────────────────
-
     private fun showError(message: String) {
         currentState = KeyboardViewController.State.ERROR
         viewController?.setState(KeyboardViewController.State.ERROR, message)
 
-        // Auto-clear error after 4 seconds
         Handler(Looper.getMainLooper()).postDelayed({
             if (currentState == KeyboardViewController.State.ERROR) {
                 currentState = KeyboardViewController.State.IDLE
                 viewController?.setState(KeyboardViewController.State.IDLE)
             }
-        }, 4000)
+        }, FEEDBACK_DURATION_MS)
     }
-
-    // ─── Lifecycle ───────────────────────────────────────────────────────
 
     override fun onStartInputView(info: android.view.inputmethod.EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
-        // Reset undo state when user starts a new input session
         if (!restarting) {
             canUndo = false
+            pendingPreview = null
+            pendingInsertion = null
+            trackedInsertion = null
+            lastInsertion = null
             viewController?.hideUndo()
+            viewController?.hidePostInsertActions()
         }
     }
 
     override fun onFinishInput() {
+        learnFromTrackedInsertion()
         super.onFinishInput()
-        // Stop any ongoing recording
         if (currentState == KeyboardViewController.State.RECORDING) {
             recordingTimer?.cancel()
             amplitudeHandler.removeCallbacks(amplitudeRunnable)
@@ -349,4 +809,75 @@ class VoiceKeyboardService : InputMethodService() {
             viewController?.setState(KeyboardViewController.State.IDLE)
         }
     }
+
+    override fun onUpdateSelection(
+        oldSelStart: Int,
+        oldSelEnd: Int,
+        newSelStart: Int,
+        newSelEnd: Int,
+        candidatesStart: Int,
+        candidatesEnd: Int
+    ) {
+        super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
+        latestSelectionStart = newSelStart
+        latestSelectionEnd = newSelEnd
+        if (newSelStart == newSelEnd) {
+            capturePendingInsertionAtCursor(newSelEnd)
+        }
+        learnFromTrackedInsertion()
+    }
+
+    private fun String.previewLine(): String {
+        val oneLine = replace(Regex("\\s+"), " ").trim()
+        return if (oneLine.length <= 72) oneLine else oneLine.take(69) + "..."
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
+    }
+
+    private enum class RewriteAction(
+        val id: String,
+        val label: String
+    ) {
+        IMPROVE("improve", "Migliora"),
+        SHORTER("shorter", "Breve"),
+        FORMAL("formal", "Formale"),
+        CASUAL("casual", "Colloquiale")
+    }
+
+    private data class PendingDictation(
+        val rawText: String,
+        val finalText: String,
+        val phase2Used: Boolean,
+        val promptPreset: String
+    )
+
+    private data class LastInsertion(
+        val insertedText: String,
+        val rawText: String,
+        val finalText: String,
+        val promptPreset: String,
+        val phase2Used: Boolean
+    )
+
+    private data class PendingInsertion(
+        val text: String,
+        val beforeContext: String,
+        val afterContext: String
+    )
+
+    private data class TrackedInsertion(
+        val originalText: String,
+        var lastObservedText: String,
+        val startOffset: Int,
+        var endOffset: Int,
+        val beforeContext: String,
+        val afterContext: String
+    )
+
+    private data class TrackedSegment(
+        val text: String,
+        val absoluteEnd: Int
+    )
 }
