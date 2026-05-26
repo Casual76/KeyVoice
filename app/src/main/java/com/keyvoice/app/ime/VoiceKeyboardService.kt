@@ -8,8 +8,10 @@ import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.ContextThemeWrapper
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
+import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.ExtractedTextRequest
 import android.view.inputmethod.InputMethodManager
@@ -95,7 +97,17 @@ class VoiceKeyboardService : InputMethodService() {
     }
 
     override fun onCreateInputView(): View {
-        val view = layoutInflater.inflate(R.layout.keyboard_view, null)
+        return try {
+            createKeyboardInputView()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to inflate keyboard view; showing fallback input view", e)
+            createFallbackInputView()
+        }
+    }
+
+    private fun createKeyboardInputView(): View {
+        val themedContext = ContextThemeWrapper(this, R.style.Theme_KeyVoice)
+        val view = LayoutInflater.from(themedContext).inflate(R.layout.keyboard_view, null)
         val controller = KeyboardViewController(view)
         viewController = controller
 
@@ -122,6 +134,40 @@ class VoiceKeyboardService : InputMethodService() {
         controller.btnLearningUndo.setOnClickListener { undoLastLearning() }
 
         return view
+    }
+
+    private fun createFallbackInputView(): View {
+        viewController = null
+        return LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(ContextCompat.getColor(context, R.color.keyboard_background))
+            setPadding(dp(12), dp(12), dp(12), dp(8))
+
+            addView(TextView(context).apply {
+                text = getString(R.string.state_idle)
+                textSize = 15f
+                gravity = Gravity.CENTER
+                setTextColor(ContextCompat.getColor(context, R.color.primary))
+                setBackgroundResource(R.drawable.bg_keyboard_action_tonal)
+                setPadding(dp(16), dp(10), dp(16), dp(10))
+                setOnClickListener { handleMicClick() }
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+
+            addView(TextView(context).apply {
+                text = getString(R.string.cd_settings)
+                textSize = 13f
+                gravity = Gravity.CENTER
+                setTextColor(ContextCompat.getColor(context, R.color.text_secondary))
+                setPadding(dp(16), dp(10), dp(16), dp(6))
+                setOnClickListener { openSettings() }
+            }, LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ))
+        }
     }
 
     override fun onDestroy() {

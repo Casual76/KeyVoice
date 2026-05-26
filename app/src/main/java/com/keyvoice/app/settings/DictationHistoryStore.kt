@@ -5,8 +5,8 @@ import android.content.SharedPreferences
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import org.json.JSONArray
+import org.json.JSONObject
 
 data class DictationHistoryItem(
     val id: String,
@@ -28,9 +28,6 @@ class DictationHistoryStore(private val context: Context) {
         private const val MAX_ITEMS = 10
     }
 
-    private val gson = Gson()
-    private val itemListType = object : TypeToken<List<DictationHistoryItem>>() {}.type
-
     private val prefs: SharedPreferences by lazy {
         createPrefs()
     }
@@ -38,7 +35,7 @@ class DictationHistoryStore(private val context: Context) {
     fun getItems(): List<DictationHistoryItem> {
         val raw = prefs.getString(KEY_ITEMS, "[]").orEmpty()
         return runCatching {
-            gson.fromJson<List<DictationHistoryItem>>(raw, itemListType).orEmpty()
+            parseItems(raw)
         }.getOrElse { error ->
             Log.w(TAG, "Unable to read dictation history; clearing it.", error)
             clear()
@@ -49,7 +46,7 @@ class DictationHistoryStore(private val context: Context) {
     fun add(item: DictationHistoryItem) {
         val updated = (listOf(item) + getItems().filterNot { it.id == item.id })
             .take(MAX_ITEMS)
-        prefs.edit().putString(KEY_ITEMS, gson.toJson(updated)).apply()
+        prefs.edit().putString(KEY_ITEMS, serializeItems(updated)).apply()
     }
 
     fun clear() {
@@ -77,5 +74,42 @@ class DictationHistoryStore(private val context: Context) {
             EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
             EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
         )
+    }
+
+    private fun parseItems(raw: String): List<DictationHistoryItem> {
+        val array = JSONArray(raw)
+        return buildList {
+            for (index in 0 until array.length()) {
+                val item = array.optJSONObject(index) ?: continue
+                add(
+                    DictationHistoryItem(
+                        id = item.optString("id"),
+                        createdAtMillis = item.optLong("createdAtMillis"),
+                        rawText = item.optString("rawText"),
+                        finalText = item.optString("finalText"),
+                        insertedText = item.optString("insertedText"),
+                        promptPreset = item.optString("promptPreset"),
+                        phase2Used = item.optBoolean("phase2Used")
+                    )
+                )
+            }
+        }
+    }
+
+    private fun serializeItems(items: List<DictationHistoryItem>): String {
+        val array = JSONArray()
+        items.forEach { item ->
+            array.put(
+                JSONObject()
+                    .put("id", item.id)
+                    .put("createdAtMillis", item.createdAtMillis)
+                    .put("rawText", item.rawText)
+                    .put("finalText", item.finalText)
+                    .put("insertedText", item.insertedText)
+                    .put("promptPreset", item.promptPreset)
+                    .put("phase2Used", item.phase2Used)
+            )
+        }
+        return array.toString()
     }
 }

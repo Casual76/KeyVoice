@@ -7,7 +7,6 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
-import com.google.android.material.button.MaterialButton
 import com.keyvoice.app.R
 
 /**
@@ -21,12 +20,12 @@ class KeyboardViewController(val rootView: View) {
     val btnKeyboard: ImageButton = rootView.findViewById(R.id.btn_keyboard)
     val btnSettings: ImageButton = rootView.findViewById(R.id.btn_settings)
     val btnUndo: ImageButton = rootView.findViewById(R.id.btn_undo)
-    val btnRewrite: MaterialButton = rootView.findViewById(R.id.btn_rewrite)
-    val btnRewriteMore: MaterialButton = rootView.findViewById(R.id.btn_rewrite_more)
-    val btnHistory: MaterialButton = rootView.findViewById(R.id.btn_history)
-    val btnPreviewInsert: MaterialButton = rootView.findViewById(R.id.btn_preview_insert)
-    val btnPreviewCancel: MaterialButton = rootView.findViewById(R.id.btn_preview_cancel)
-    val btnLearningUndo: MaterialButton = rootView.findViewById(R.id.btn_learning_undo)
+    val btnRewrite: TextView = rootView.findViewById(R.id.btn_rewrite)
+    val btnRewriteMore: TextView = rootView.findViewById(R.id.btn_rewrite_more)
+    val btnHistory: TextView = rootView.findViewById(R.id.btn_history)
+    val btnPreviewInsert: TextView = rootView.findViewById(R.id.btn_preview_insert)
+    val btnPreviewCancel: TextView = rootView.findViewById(R.id.btn_preview_cancel)
+    val btnLearningUndo: TextView = rootView.findViewById(R.id.btn_learning_undo)
     val etPreview: EditText = rootView.findViewById(R.id.et_preview)
 
     private val tvStatus: TextView = rootView.findViewById(R.id.tv_status)
@@ -68,6 +67,7 @@ class KeyboardViewController(val rootView: View) {
         progressSpinner.visibility = View.GONE
         audioLevelView.visibility = View.GONE
         previewContainer.visibility = View.GONE
+        setPreviewEditingEnabled(false)
 
         // Stop pulse animation
         btnMic.clearAnimation()
@@ -129,6 +129,7 @@ class KeyboardViewController(val rootView: View) {
                 btnMic.alpha = 1f
                 btnMic.setBackgroundResource(R.drawable.bg_mic_idle)
                 btnMic.setImageResource(R.drawable.ic_mic)
+                setPreviewEditingEnabled(true)
                 previewContainer.visibility = View.VISIBLE
                 tvStatus.text = rootView.context.getString(R.string.state_preview)
                 tvStatus.visibility = View.VISIBLE
@@ -205,6 +206,15 @@ class KeyboardViewController(val rootView: View) {
 
     fun getPreviewText(): String {
         return etPreview.text?.toString().orEmpty()
+    }
+
+    private fun setPreviewEditingEnabled(enabled: Boolean) {
+        etPreview.isFocusable = enabled
+        etPreview.isFocusableInTouchMode = enabled
+        etPreview.isCursorVisible = enabled
+        if (!enabled) {
+            etPreview.clearFocus()
+        }
     }
 
     fun showFeedback(message: String, showUndoAction: Boolean = false) {
