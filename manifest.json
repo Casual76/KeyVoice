@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.0.2",
-      "releaseDate": "2026-05-10",
-      "changelog": "Migliorata la dashboard con verifica API Key, ripristinato il cambio tastiera, resi piu chiari gli errori Groq, disattivato il logging HTTP in release e aggiornata la documentazione.",
-      "releaseTag": "stable-keyvoice-v1.0.2",
-      "apkAsset": "keyvoice-1.0.2.apk",
+      "version": "1.0.3",
+      "releaseDate": "2026-05-26",
+      "changelog": "Upgrade QoL: inserimento intelligente con spazi e maiuscole contestuali, sostituzione selezione, punteggiatura parlata senza Fase 2, anteprima testi lunghi, storico locale, riformulazione ultimo testo, preset prompt, vocabolario a chip con apprendimento automatico e stati di rete più chiari.",
+      "releaseTag": "stable-keyvoice-v1.0.3",
+      "apkAsset": "keyvoice-1.0.3.apk",
       "exeAsset": "",
-      "sizeBytes": 2167749
+      "sizeBytes": 2201780
     },
     "beta": {
-      "version": "1.0.2",
-      "releaseDate": "2026-05-10",
-      "changelog": "Migliorata la dashboard con verifica API Key, ripristinato il cambio tastiera, resi piu chiari gli errori Groq, disattivato il logging HTTP in release e aggiornata la documentazione.",
-      "releaseTag": "stable-keyvoice-v1.0.2",
-      "apkAsset": "keyvoice-1.0.2.apk",
+      "version": "1.0.3",
+      "releaseDate": "2026-05-26",
+      "changelog": "Upgrade QoL: inserimento intelligente con spazi e maiuscole contestuali, sostituzione selezione, punteggiatura parlata senza Fase 2, anteprima testi lunghi, storico locale, riformulazione ultimo testo, preset prompt, vocabolario a chip con apprendimento automatico e stati di rete più chiari.",
+      "releaseTag": "stable-keyvoice-v1.0.3",
+      "apkAsset": "keyvoice-1.0.3.apk",
       "exeAsset": "",
-      "sizeBytes": 2167749
+      "sizeBytes": 2201780
     },
     "history": [
+      {
+        "version": "1.0.2",
+        "releaseDate": "2026-05-10",
+        "changelog": "Migliorata la dashboard con verifica API Key, ripristinato il cambio tastiera, resi piu chiari gli errori Groq, disattivato il logging HTTP in release e aggiornata la documentazione.",
+        "releaseTag": "stable-keyvoice-v1.0.2",
+        "apkAsset": "keyvoice-1.0.2.apk",
+        "exeAsset": "",
+        "sizeBytes": 2167749
+      },
       {
         "version": "1.0.1",
         "releaseDate": "2026-05-10",
