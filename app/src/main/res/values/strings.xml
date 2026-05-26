@@ -16,6 +16,7 @@
     <string name="state_rewriting">Riformulazione...</string>
     <string name="state_preview">Controlla prima di inserire</string>
     <string name="state_quick_insert">Inserimento rapido senza correzione AI</string>
+    <string name="state_returning_keyboard">Torno alla tastiera precedente...</string>
     <string name="state_network_slow">Rete lenta, attendo ancora...</string>
     <string name="state_network_waiting">Attesa prolungata, non chiudere la tastiera...</string>
     <string name="state_countdown">%d secondi rimanenti</string>
@@ -49,6 +50,10 @@
     <string name="settings_max_duration_value">%d secondi</string>
     <string name="settings_haptic">Feedback aptico</string>
     <string name="settings_haptic_description">Vibrazione al tocco del pulsante microfono</string>
+    <string name="settings_return_to_previous_keyboard">Torna alla tastiera precedente</string>
+    <string name="settings_return_to_previous_keyboard_description">Dopo inserimento o annullamento, KeyVoice prova a rientrare automaticamente nella tastiera usata prima.</string>
+    <string name="settings_auto_start_recording">Avvia dettatura all\'apertura</string>
+    <string name="settings_auto_start_recording_description">Quando selezioni KeyVoice in un campo di testo, la registrazione parte da sola. Non si attiva nei campi password o nella dashboard.</string>
     <string name="settings_save">Salva</string>
     <string name="settings_saved">Impostazioni salvate</string>
 

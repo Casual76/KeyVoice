@@ -4,9 +4,11 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.inputmethodservice.InputMethodService
+import android.os.Build
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
+import android.text.InputType
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.Gravity
@@ -14,6 +16,7 @@ import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.ExtractedTextRequest
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.PopupWindow
@@ -47,6 +50,8 @@ class VoiceKeyboardService : InputMethodService() {
         private const val SLOW_NETWORK_DELAY_MS = 8_000L
         private const val VERY_SLOW_NETWORK_DELAY_MS = 20_000L
         private const val FEEDBACK_DURATION_MS = 4_000L
+        private const val AUTO_START_DELAY_MS = 250L
+        private const val AUTO_RETURN_DELAY_MS = 900L
     }
 
     private lateinit var prefs: PreferencesManager
@@ -68,6 +73,7 @@ class VoiceKeyboardService : InputMethodService() {
     private var pendingPreview: PendingDictation? = null
     private var lastInsertion: LastInsertion? = null
     private var lastLearnedTerms: List<String> = emptyList()
+    private var latestEditorInfo: EditorInfo? = null
 
     private val amplitudeHandler = Handler(Looper.getMainLooper())
     private val uiHandler = Handler(Looper.getMainLooper())
@@ -85,6 +91,8 @@ class VoiceKeyboardService : InputMethodService() {
     private var recordingTimer: CountDownTimer? = null
     private var slowNetworkRunnable: Runnable? = null
     private var verySlowNetworkRunnable: Runnable? = null
+    private var autoStartRunnable: Runnable? = null
+    private var autoReturnRunnable: Runnable? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -117,6 +125,8 @@ class VoiceKeyboardService : InputMethodService() {
         controller.hideLearningFeedback()
 
         controller.btnMic.setOnClickListener {
+            cancelAutoStart()
+            cancelAutoReturn()
             if (prefs.hapticFeedback) {
                 it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             }
@@ -124,13 +134,29 @@ class VoiceKeyboardService : InputMethodService() {
         }
 
         controller.btnSettings.setOnClickListener { openSettings() }
-        controller.btnKeyboard.setOnClickListener { switchKeyboard() }
-        controller.btnUndo.setOnClickListener { undoLastInsert() }
+        controller.btnKeyboard.setOnClickListener {
+            cancelAutoStart()
+            cancelAutoReturn()
+            switchKeyboard()
+        }
+        controller.btnUndo.setOnClickListener {
+            cancelAutoReturn()
+            undoLastInsert()
+        }
         controller.btnPreviewInsert.setOnClickListener { confirmPreview() }
         controller.btnPreviewCancel.setOnClickListener { cancelPreview() }
-        controller.btnRewrite.setOnClickListener { rewriteLastInsertion(RewriteAction.IMPROVE) }
-        controller.btnRewriteMore.setOnClickListener { showRewriteMenu() }
-        controller.btnHistory.setOnClickListener { showHistoryPopup() }
+        controller.btnRewrite.setOnClickListener {
+            cancelAutoReturn()
+            rewriteLastInsertion(RewriteAction.IMPROVE)
+        }
+        controller.btnRewriteMore.setOnClickListener {
+            cancelAutoReturn()
+            showRewriteMenu()
+        }
+        controller.btnHistory.setOnClickListener {
+            cancelAutoReturn()
+            showHistoryPopup()
+        }
         controller.btnLearningUndo.setOnClickListener { undoLastLearning() }
 
         return view
@@ -174,6 +200,8 @@ class VoiceKeyboardService : InputMethodService() {
         serviceScope?.cancel()
         serviceScope = null
         amplitudeHandler.removeCallbacks(amplitudeRunnable)
+        cancelAutoStart()
+        cancelAutoReturn()
         clearApiStatusHints()
         recordingTimer?.cancel()
         audioRecorder.release()
@@ -195,6 +223,8 @@ class VoiceKeyboardService : InputMethodService() {
     }
 
     private fun startRecording() {
+        cancelAutoReturn()
+
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             != PackageManager.PERMISSION_GRANTED
         ) {
@@ -355,6 +385,7 @@ class VoiceKeyboardService : InputMethodService() {
         if (edited.isBlank()) {
             currentState = KeyboardViewController.State.IDLE
             viewController?.setState(KeyboardViewController.State.IDLE)
+            scheduleReturnToPreviousKeyboard()
             return
         }
 
@@ -367,6 +398,7 @@ class VoiceKeyboardService : InputMethodService() {
         pendingPreview = null
         currentState = KeyboardViewController.State.IDLE
         viewController?.setState(KeyboardViewController.State.IDLE)
+        scheduleReturnToPreviousKeyboard()
     }
 
     private fun shouldPreview(text: String): Boolean {
@@ -388,6 +420,7 @@ class VoiceKeyboardService : InputMethodService() {
         if (inserted.isNotBlank()) {
             viewController?.showPostInsertActions()
         }
+        scheduleReturnToPreviousKeyboard()
     }
 
     private fun insertText(
@@ -803,11 +836,100 @@ class VoiceKeyboardService : InputMethodService() {
     }
 
     private fun openSettings() {
+        cancelAutoStart()
+        cancelAutoReturn()
         val intent = Intent(this, MainSetupActivity::class.java).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         startActivity(intent)
         requestHideSelf(0)
+    }
+
+    private fun scheduleAutoStartRecording(info: EditorInfo?, restarting: Boolean) {
+        cancelAutoStart()
+        if (restarting || !prefs.autoStartRecording || !canAutoStartRecording(info)) return
+
+        autoStartRunnable = Runnable {
+            autoStartRunnable = null
+            if (currentState == KeyboardViewController.State.IDLE && canAutoStartRecording(latestEditorInfo)) {
+                startRecording()
+            }
+        }
+        uiHandler.postDelayed(autoStartRunnable!!, AUTO_START_DELAY_MS)
+    }
+
+    private fun canAutoStartRecording(info: EditorInfo?): Boolean {
+        if (!prefs.hasApiKey()) return false
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            return false
+        }
+        if (info?.packageName == packageName) return false
+        if (isSensitiveEditor(info)) return false
+        return currentInputConnection != null
+    }
+
+    private fun isSensitiveEditor(info: EditorInfo?): Boolean {
+        val inputType = info?.inputType ?: return false
+        val inputClass = inputType and InputType.TYPE_MASK_CLASS
+        val variation = inputType and InputType.TYPE_MASK_VARIATION
+
+        return when (inputClass) {
+            InputType.TYPE_CLASS_TEXT -> variation in setOf(
+                InputType.TYPE_TEXT_VARIATION_PASSWORD,
+                InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD,
+                InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD
+            )
+            InputType.TYPE_CLASS_NUMBER -> variation == InputType.TYPE_NUMBER_VARIATION_PASSWORD
+            else -> false
+        }
+    }
+
+    private fun scheduleReturnToPreviousKeyboard() {
+        cancelAutoReturn()
+        if (!prefs.returnToPreviousKeyboard) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.P) return
+
+        autoReturnRunnable = Runnable {
+            autoReturnRunnable = null
+            returnToPreviousKeyboard()
+        }
+        uiHandler.postDelayed(autoReturnRunnable!!, AUTO_RETURN_DELAY_MS)
+    }
+
+    private fun returnToPreviousKeyboard() {
+        if (currentState == KeyboardViewController.State.RECORDING ||
+            currentState == KeyboardViewController.State.PROCESSING_PHASE1 ||
+            currentState == KeyboardViewController.State.PROCESSING_PHASE2 ||
+            currentState == KeyboardViewController.State.PREVIEW ||
+            currentState == KeyboardViewController.State.REWRITING
+        ) {
+            return
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            viewController?.showTransientStatus(getString(R.string.state_returning_keyboard))
+            val switched = runCatching {
+                switchToPreviousInputMethod()
+            }.getOrElse { error ->
+                Log.w(TAG, "Unable to return to previous input method", error)
+                false
+            }
+            if (!switched) {
+                viewController?.setState(KeyboardViewController.State.IDLE)
+            }
+        }
+    }
+
+    private fun cancelAutoStart() {
+        autoStartRunnable?.let { uiHandler.removeCallbacks(it) }
+        autoStartRunnable = null
+    }
+
+    private fun cancelAutoReturn() {
+        autoReturnRunnable?.let { uiHandler.removeCallbacks(it) }
+        autoReturnRunnable = null
     }
 
     private fun switchKeyboard() {
@@ -832,6 +954,7 @@ class VoiceKeyboardService : InputMethodService() {
 
     override fun onStartInputView(info: android.view.inputmethod.EditorInfo?, restarting: Boolean) {
         super.onStartInputView(info, restarting)
+        latestEditorInfo = info
         if (!restarting) {
             canUndo = false
             pendingPreview = null
@@ -841,9 +964,13 @@ class VoiceKeyboardService : InputMethodService() {
             viewController?.hideUndo()
             viewController?.hidePostInsertActions()
         }
+        scheduleAutoStartRecording(info, restarting)
     }
 
     override fun onFinishInput() {
+        cancelAutoStart()
+        cancelAutoReturn()
+        latestEditorInfo = null
         learnFromTrackedInsertion()
         super.onFinishInput()
         if (currentState == KeyboardViewController.State.RECORDING) {

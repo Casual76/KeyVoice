@@ -57,6 +57,8 @@ class MainSetupActivity : AppCompatActivity() {
     private lateinit var tvDurationValue: TextView
     private lateinit var switchPreviewLongText: MaterialSwitch
     private lateinit var switchHaptic: MaterialSwitch
+    private lateinit var switchReturnToPreviousKeyboard: MaterialSwitch
+    private lateinit var switchAutoStartRecording: MaterialSwitch
     private lateinit var btnSave: MaterialButton
     private val manualVocabularyTerms = mutableListOf<String>()
 
@@ -121,6 +123,8 @@ class MainSetupActivity : AppCompatActivity() {
         tvDurationValue = findViewById(R.id.tv_duration_value)
         switchPreviewLongText = findViewById(R.id.switch_preview_long_text)
         switchHaptic = findViewById(R.id.switch_haptic)
+        switchReturnToPreviousKeyboard = findViewById(R.id.switch_return_to_previous_keyboard)
+        switchAutoStartRecording = findViewById(R.id.switch_auto_start_recording)
         btnSave = findViewById(R.id.btn_save)
 
         // Adapters
@@ -173,6 +177,8 @@ class MainSetupActivity : AppCompatActivity() {
         updateDurationLabel(prefs.maxRecordingDuration)
         switchPreviewLongText.isChecked = prefs.previewLongTextEnabled
         switchHaptic.isChecked = prefs.hapticFeedback
+        switchReturnToPreviousKeyboard.isChecked = prefs.returnToPreviousKeyboard
+        switchAutoStartRecording.isChecked = prefs.autoStartRecording
     }
 
     private fun setupListeners() {
@@ -241,6 +247,8 @@ class MainSetupActivity : AppCompatActivity() {
         prefs.maxRecordingDuration = sliderDuration.value.toInt()
         prefs.previewLongTextEnabled = switchPreviewLongText.isChecked
         prefs.hapticFeedback = switchHaptic.isChecked
+        prefs.returnToPreviousKeyboard = switchReturnToPreviousKeyboard.isChecked
+        prefs.autoStartRecording = switchAutoStartRecording.isChecked
 
         Toast.makeText(this, getString(R.string.settings_saved), Toast.LENGTH_SHORT).show()
     }

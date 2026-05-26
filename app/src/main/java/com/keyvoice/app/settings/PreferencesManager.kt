@@ -31,6 +31,8 @@ class PreferencesManager private constructor(private val context: Context) {
         private const val KEY_LEARNED_VOCABULARY = "learned_vocabulary"
         private const val KEY_PROMPT_PRESET = "prompt_preset"
         private const val KEY_PREVIEW_LONG_TEXT_ENABLED = "preview_long_text_enabled"
+        private const val KEY_RETURN_TO_PREVIOUS_KEYBOARD = "return_to_previous_keyboard"
+        private const val KEY_AUTO_START_RECORDING = "auto_start_recording"
         private const val MAX_VOCABULARY_TERMS = 250
 
         // Defaults
@@ -43,6 +45,8 @@ class PreferencesManager private constructor(private val context: Context) {
         const val DEFAULT_SYSTEM_PROMPT = PromptPreset.DEFAULT_CLEAN_PROMPT
         const val DEFAULT_VOCABULARY = ""
         const val DEFAULT_PREVIEW_LONG_TEXT_ENABLED = true
+        const val DEFAULT_RETURN_TO_PREVIOUS_KEYBOARD = true
+        const val DEFAULT_AUTO_START_RECORDING = true
 
         // Language options
         const val LANGUAGE_ITALIAN = "it"
@@ -200,6 +204,16 @@ class PreferencesManager private constructor(private val context: Context) {
     var previewLongTextEnabled: Boolean
         get() = prefs.getBoolean(KEY_PREVIEW_LONG_TEXT_ENABLED, DEFAULT_PREVIEW_LONG_TEXT_ENABLED)
         set(value) = prefs.edit().putBoolean(KEY_PREVIEW_LONG_TEXT_ENABLED, value).apply()
+
+    /** Whether KeyVoice should go back to the previous keyboard after a one-shot dictation. */
+    var returnToPreviousKeyboard: Boolean
+        get() = prefs.getBoolean(KEY_RETURN_TO_PREVIOUS_KEYBOARD, DEFAULT_RETURN_TO_PREVIOUS_KEYBOARD)
+        set(value) = prefs.edit().putBoolean(KEY_RETURN_TO_PREVIOUS_KEYBOARD, value).apply()
+
+    /** Whether recording starts automatically when KeyVoice opens on a safe text field. */
+    var autoStartRecording: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_START_RECORDING, DEFAULT_AUTO_START_RECORDING)
+        set(value) = prefs.edit().putBoolean(KEY_AUTO_START_RECORDING, value).apply()
 
     /** Returns the system prompt resolved from the selected preset. */
     fun getResolvedSystemPrompt(): String {
