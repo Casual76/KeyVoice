@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.0.4",
+      "version": "1.1.0",
       "releaseDate": "2026-05-26",
-      "changelog": "Hotfix: risolto crash all'avvio della tastiera in release, ripristinata la comparsa dell'IME e aggiunta una protezione fallback per la view della tastiera.",
-      "releaseTag": "stable-keyvoice-v1.0.4",
-      "apkAsset": "keyvoice-1.0.4.apk",
+      "changelog": "Nuova modalita one-shot: KeyVoice viene registrata come IME vocale ausiliario, avvia la registrazione quando viene selezionata in campi sicuri e torna automaticamente alla tastiera precedente dopo la dettatura. Aggiunti controlli in dashboard per avvio automatico e ritorno alla tastiera precedente.",
+      "releaseTag": "stable-keyvoice-v1.1.0",
+      "apkAsset": "keyvoice-1.1.0.apk",
       "exeAsset": "",
-      "sizeBytes": 2207122
+      "sizeBytes": 2211049
     },
     "beta": {
-      "version": "1.0.4",
+      "version": "1.1.0",
       "releaseDate": "2026-05-26",
-      "changelog": "Hotfix: risolto crash all'avvio della tastiera in release, ripristinata la comparsa dell'IME e aggiunta una protezione fallback per la view della tastiera.",
-      "releaseTag": "stable-keyvoice-v1.0.4",
-      "apkAsset": "keyvoice-1.0.4.apk",
+      "changelog": "Nuova modalita one-shot: KeyVoice viene registrata come IME vocale ausiliario, avvia la registrazione quando viene selezionata in campi sicuri e torna automaticamente alla tastiera precedente dopo la dettatura. Aggiunti controlli in dashboard per avvio automatico e ritorno alla tastiera precedente.",
+      "releaseTag": "stable-keyvoice-v1.1.0",
+      "apkAsset": "keyvoice-1.1.0.apk",
       "exeAsset": "",
-      "sizeBytes": 2207122
+      "sizeBytes": 2211049
     },
     "history": [
+      {
+        "version": "1.0.4",
+        "releaseDate": "2026-05-26",
+        "changelog": "Hotfix: risolto crash all'avvio della tastiera in release, ripristinata la comparsa dell'IME e aggiunta una protezione fallback per la view della tastiera.",
+        "releaseTag": "stable-keyvoice-v1.0.4",
+        "apkAsset": "keyvoice-1.0.4.apk",
+        "exeAsset": "",
+        "sizeBytes": 2207122
+      },
       {
         "version": "1.0.3",
         "releaseDate": "2026-05-26",
