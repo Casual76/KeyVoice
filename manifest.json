@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.1",
+      "version": "1.2.2",
       "releaseDate": "2026-05-27",
-      "changelog": "Shortcut accessibilita one-shot: la scorciatoia avvia subito la dettatura, il tasto stop compare solo durante la registrazione e KeyVoice si disattiva automaticamente a fine uso.",
-      "releaseTag": "stable-keyvoice-v1.2.1",
-      "apkAsset": "keyvoice-1.2.1.apk",
+      "changelog": "Fix shortcut accessibilita: usare di nuovo la combinazione per terminare la dettatura ora conserva l audio registrato e completa trascrizione e inserimento invece di scartare la registrazione.",
+      "releaseTag": "stable-keyvoice-v1.2.2",
+      "apkAsset": "keyvoice-1.2.2.apk",
       "exeAsset": "",
-      "sizeBytes": 2229012
+      "sizeBytes": 2229208
     },
     "beta": {
-      "version": "1.2.1",
+      "version": "1.2.2",
       "releaseDate": "2026-05-27",
-      "changelog": "Shortcut accessibilita one-shot: la scorciatoia avvia subito la dettatura, il tasto stop compare solo durante la registrazione e KeyVoice si disattiva automaticamente a fine uso.",
-      "releaseTag": "stable-keyvoice-v1.2.1",
-      "apkAsset": "keyvoice-1.2.1.apk",
+      "changelog": "Fix shortcut accessibilita: usare di nuovo la combinazione per terminare la dettatura ora conserva l audio registrato e completa trascrizione e inserimento invece di scartare la registrazione.",
+      "releaseTag": "stable-keyvoice-v1.2.2",
+      "apkAsset": "keyvoice-1.2.2.apk",
       "exeAsset": "",
-      "sizeBytes": 2229012
+      "sizeBytes": 2229208
     },
     "history": [
+      {
+        "version": "1.2.1",
+        "releaseDate": "2026-05-27",
+        "changelog": "Shortcut accessibilita one-shot: la scorciatoia avvia subito la dettatura, il tasto stop compare solo durante la registrazione e KeyVoice si disattiva automaticamente a fine uso.",
+        "releaseTag": "stable-keyvoice-v1.2.1",
+        "apkAsset": "keyvoice-1.2.1.apk",
+        "exeAsset": "",
+        "sizeBytes": 2229012
+      },
       {
         "version": "1.2.0",
         "releaseDate": "2026-05-27",
