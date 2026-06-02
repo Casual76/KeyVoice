@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.6",
+      "version": "1.2.7",
       "releaseDate": "2026-06-02",
-      "changelog": "Fix tasto accessibilita: oltre al callback del pulsante accessibilita, KeyVoice ora intercetta la scorciatoia volume su/giu quando il servizio e gia attivo, usando lo stesso toggle start/stop. Aggiunto filtro tasti dichiarato nel servizio e anti-rimbalzo all avvio per evitare stop immediati.",
-      "releaseTag": "stable-keyvoice-v1.2.6",
-      "apkAsset": "keyvoice-1.2.6.apk",
+      "changelog": "Fix Fase 2: il modello ora tratta sempre il testo come trascrizione da pulire e non deve rispondere alle domande dettate. Migliorato feedback apprendimento vocabolario: toast nella tastiera e pannello/toast in modalita accessibilita quando una correzione utente aggiunge nuove parole al dizionario.",
+      "releaseTag": "stable-keyvoice-v1.2.7",
+      "apkAsset": "keyvoice-1.2.7.apk",
       "exeAsset": "",
-      "sizeBytes": 2246581
+      "sizeBytes": 2247967
     },
     "beta": {
-      "version": "1.2.6",
+      "version": "1.2.7",
       "releaseDate": "2026-06-02",
-      "changelog": "Fix tasto accessibilita: oltre al callback del pulsante accessibilita, KeyVoice ora intercetta la scorciatoia volume su/giu quando il servizio e gia attivo, usando lo stesso toggle start/stop. Aggiunto filtro tasti dichiarato nel servizio e anti-rimbalzo all avvio per evitare stop immediati.",
-      "releaseTag": "stable-keyvoice-v1.2.6",
-      "apkAsset": "keyvoice-1.2.6.apk",
+      "changelog": "Fix Fase 2: il modello ora tratta sempre il testo come trascrizione da pulire e non deve rispondere alle domande dettate. Migliorato feedback apprendimento vocabolario: toast nella tastiera e pannello/toast in modalita accessibilita quando una correzione utente aggiunge nuove parole al dizionario.",
+      "releaseTag": "stable-keyvoice-v1.2.7",
+      "apkAsset": "keyvoice-1.2.7.apk",
       "exeAsset": "",
-      "sizeBytes": 2246581
+      "sizeBytes": 2247967
     },
     "history": [
+      {
+        "version": "1.2.6",
+        "releaseDate": "2026-06-02",
+        "changelog": "Fix tasto accessibilita: oltre al callback del pulsante accessibilita, KeyVoice ora intercetta la scorciatoia volume su/giu quando il servizio e gia attivo, usando lo stesso toggle start/stop. Aggiunto filtro tasti dichiarato nel servizio e anti-rimbalzo all avvio per evitare stop immediati.",
+        "releaseTag": "stable-keyvoice-v1.2.6",
+        "apkAsset": "keyvoice-1.2.6.apk",
+        "exeAsset": "",
+        "sizeBytes": 2246581
+      },
       {
         "version": "1.2.5",
         "releaseDate": "2026-06-02",
