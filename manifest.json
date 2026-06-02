@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.3",
+      "version": "1.2.4",
       "releaseDate": "2026-06-02",
-      "changelog": "Accesso rapido via accessibilita con pannello flottante persistente: stati di registrazione, trascrizione, correzione, rete lenta, fallback ed errori ora restano visibili. Migliorata la dashboard con stato del servizio accessibilita e protezione della API key salvata, che non viene piu mostrata nel campo impostazioni.",
-      "releaseTag": "stable-keyvoice-v1.2.3",
-      "apkAsset": "keyvoice-1.2.3.apk",
+      "changelog": "Fix scorciatoia accessibilita: ripremendo il tasto durante la registrazione ora ferma la registrazione e mostra subito lo stato di elaborazione. Aggiunto flag Android per ricevere il pulsante accessibilita e protezione contro stop doppi.",
+      "releaseTag": "stable-keyvoice-v1.2.4",
+      "apkAsset": "keyvoice-1.2.4.apk",
       "exeAsset": "",
-      "sizeBytes": 2246044
+      "sizeBytes": 2246261
     },
     "beta": {
-      "version": "1.2.3",
+      "version": "1.2.4",
       "releaseDate": "2026-06-02",
-      "changelog": "Accesso rapido via accessibilita con pannello flottante persistente: stati di registrazione, trascrizione, correzione, rete lenta, fallback ed errori ora restano visibili. Migliorata la dashboard con stato del servizio accessibilita e protezione della API key salvata, che non viene piu mostrata nel campo impostazioni.",
-      "releaseTag": "stable-keyvoice-v1.2.3",
-      "apkAsset": "keyvoice-1.2.3.apk",
+      "changelog": "Fix scorciatoia accessibilita: ripremendo il tasto durante la registrazione ora ferma la registrazione e mostra subito lo stato di elaborazione. Aggiunto flag Android per ricevere il pulsante accessibilita e protezione contro stop doppi.",
+      "releaseTag": "stable-keyvoice-v1.2.4",
+      "apkAsset": "keyvoice-1.2.4.apk",
       "exeAsset": "",
-      "sizeBytes": 2246044
+      "sizeBytes": 2246261
     },
     "history": [
+      {
+        "version": "1.2.3",
+        "releaseDate": "2026-06-02",
+        "changelog": "Accesso rapido via accessibilita con pannello flottante persistente: stati di registrazione, trascrizione, correzione, rete lenta, fallback ed errori ora restano visibili. Migliorata la dashboard con stato del servizio accessibilita e protezione della API key salvata, che non viene piu mostrata nel campo impostazioni.",
+        "releaseTag": "stable-keyvoice-v1.2.3",
+        "apkAsset": "keyvoice-1.2.3.apk",
+        "exeAsset": "",
+        "sizeBytes": 2246044
+      },
       {
         "version": "1.2.2",
         "releaseDate": "2026-05-27",
