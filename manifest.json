@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.4",
+      "version": "1.2.5",
       "releaseDate": "2026-06-02",
-      "changelog": "Fix scorciatoia accessibilita: ripremendo il tasto durante la registrazione ora ferma la registrazione e mostra subito lo stato di elaborazione. Aggiunto flag Android per ricevere il pulsante accessibilita e protezione contro stop doppi.",
-      "releaseTag": "stable-keyvoice-v1.2.4",
-      "apkAsset": "keyvoice-1.2.4.apk",
+      "changelog": "Fix feedback accessibilita: il pannello non viene piu nascosto/scartato quando il tasto accessibilita cambia focus o finestra durante la registrazione. Il servizio resta attivo dopo la sessione, cosi il tasto accessibilita puo comportarsi da start/stop e mostrare gli stati di elaborazione.",
+      "releaseTag": "stable-keyvoice-v1.2.5",
+      "apkAsset": "keyvoice-1.2.5.apk",
       "exeAsset": "",
-      "sizeBytes": 2246261
+      "sizeBytes": 2246191
     },
     "beta": {
-      "version": "1.2.4",
+      "version": "1.2.5",
       "releaseDate": "2026-06-02",
-      "changelog": "Fix scorciatoia accessibilita: ripremendo il tasto durante la registrazione ora ferma la registrazione e mostra subito lo stato di elaborazione. Aggiunto flag Android per ricevere il pulsante accessibilita e protezione contro stop doppi.",
-      "releaseTag": "stable-keyvoice-v1.2.4",
-      "apkAsset": "keyvoice-1.2.4.apk",
+      "changelog": "Fix feedback accessibilita: il pannello non viene piu nascosto/scartato quando il tasto accessibilita cambia focus o finestra durante la registrazione. Il servizio resta attivo dopo la sessione, cosi il tasto accessibilita puo comportarsi da start/stop e mostrare gli stati di elaborazione.",
+      "releaseTag": "stable-keyvoice-v1.2.5",
+      "apkAsset": "keyvoice-1.2.5.apk",
       "exeAsset": "",
-      "sizeBytes": 2246261
+      "sizeBytes": 2246191
     },
     "history": [
+      {
+        "version": "1.2.4",
+        "releaseDate": "2026-06-02",
+        "changelog": "Fix scorciatoia accessibilita: ripremendo il tasto durante la registrazione ora ferma la registrazione e mostra subito lo stato di elaborazione. Aggiunto flag Android per ricevere il pulsante accessibilita e protezione contro stop doppi.",
+        "releaseTag": "stable-keyvoice-v1.2.4",
+        "apkAsset": "keyvoice-1.2.4.apk",
+        "exeAsset": "",
+        "sizeBytes": 2246261
+      },
       {
         "version": "1.2.3",
         "releaseDate": "2026-06-02",
