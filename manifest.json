@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.10",
+      "version": "1.2.11",
       "releaseDate": "2026-06-03",
-      "changelog": "Hotfix apprendimento vocabolario: KeyVoice ora impara solo da correzioni applicate al testo appena inserito da KeyVoice, scarta il tracking quando l'utente continua a scrivere manualmente e rende l'algoritmo piu conservativo per evitare parole comuni aggiunte per errore.",
-      "releaseTag": "stable-keyvoice-v1.2.10",
-      "apkAsset": "keyvoice-1.2.10.apk",
+      "changelog": "Aggiunta impostazione per disattivare l'apprendimento automatico del vocabolario. L'apprendimento automatico ora e spento di default e KeyVoice impara nuove parole solo se l'utente lo abilita esplicitamente.",
+      "releaseTag": "stable-keyvoice-v1.2.11",
+      "apkAsset": "keyvoice-1.2.11.apk",
       "exeAsset": "",
-      "sizeBytes": 3219727
+      "sizeBytes": 3221141
     },
     "beta": {
-      "version": "1.2.10",
+      "version": "1.2.11",
       "releaseDate": "2026-06-03",
-      "changelog": "Hotfix apprendimento vocabolario: KeyVoice ora impara solo da correzioni applicate al testo appena inserito da KeyVoice, scarta il tracking quando l'utente continua a scrivere manualmente e rende l'algoritmo piu conservativo per evitare parole comuni aggiunte per errore.",
-      "releaseTag": "stable-keyvoice-v1.2.10",
-      "apkAsset": "keyvoice-1.2.10.apk",
+      "changelog": "Aggiunta impostazione per disattivare l'apprendimento automatico del vocabolario. L'apprendimento automatico ora e spento di default e KeyVoice impara nuove parole solo se l'utente lo abilita esplicitamente.",
+      "releaseTag": "stable-keyvoice-v1.2.11",
+      "apkAsset": "keyvoice-1.2.11.apk",
       "exeAsset": "",
-      "sizeBytes": 3219727
+      "sizeBytes": 3221141
     },
     "history": [
+      {
+        "version": "1.2.10",
+        "releaseDate": "2026-06-03",
+        "changelog": "Hotfix apprendimento vocabolario: KeyVoice ora impara solo da correzioni applicate al testo appena inserito da KeyVoice, scarta il tracking quando l'utente continua a scrivere manualmente e rende l'algoritmo piu conservativo per evitare parole comuni aggiunte per errore.",
+        "releaseTag": "stable-keyvoice-v1.2.10",
+        "apkAsset": "keyvoice-1.2.10.apk",
+        "exeAsset": "",
+        "sizeBytes": 3219727
+      },
       {
         "version": "1.2.9",
         "releaseDate": "2026-06-03",
