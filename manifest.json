@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.9",
+      "version": "1.2.10",
       "releaseDate": "2026-06-03",
-      "changelog": "Hotfix inserimento e apprendimento: la modalita accessibilita ora verifica che il testo sia realmente scritto prima di confermare l'inserimento, usa fallback piu affidabile, legge piu contesto per apprendere correzioni su dettati lunghi e non aggiunge piu il punto finale automatico.",
-      "releaseTag": "stable-keyvoice-v1.2.9",
-      "apkAsset": "keyvoice-1.2.9.apk",
+      "changelog": "Hotfix apprendimento vocabolario: KeyVoice ora impara solo da correzioni applicate al testo appena inserito da KeyVoice, scarta il tracking quando l'utente continua a scrivere manualmente e rende l'algoritmo piu conservativo per evitare parole comuni aggiunte per errore.",
+      "releaseTag": "stable-keyvoice-v1.2.10",
+      "apkAsset": "keyvoice-1.2.10.apk",
       "exeAsset": "",
-      "sizeBytes": 3219212
+      "sizeBytes": 3219727
     },
     "beta": {
-      "version": "1.2.9",
+      "version": "1.2.10",
       "releaseDate": "2026-06-03",
-      "changelog": "Hotfix inserimento e apprendimento: la modalita accessibilita ora verifica che il testo sia realmente scritto prima di confermare l'inserimento, usa fallback piu affidabile, legge piu contesto per apprendere correzioni su dettati lunghi e non aggiunge piu il punto finale automatico.",
-      "releaseTag": "stable-keyvoice-v1.2.9",
-      "apkAsset": "keyvoice-1.2.9.apk",
+      "changelog": "Hotfix apprendimento vocabolario: KeyVoice ora impara solo da correzioni applicate al testo appena inserito da KeyVoice, scarta il tracking quando l'utente continua a scrivere manualmente e rende l'algoritmo piu conservativo per evitare parole comuni aggiunte per errore.",
+      "releaseTag": "stable-keyvoice-v1.2.10",
+      "apkAsset": "keyvoice-1.2.10.apk",
       "exeAsset": "",
-      "sizeBytes": 3219212
+      "sizeBytes": 3219727
     },
     "history": [
+      {
+        "version": "1.2.9",
+        "releaseDate": "2026-06-03",
+        "changelog": "Hotfix inserimento e apprendimento: la modalita accessibilita ora verifica che il testo sia realmente scritto prima di confermare l'inserimento, usa fallback piu affidabile, legge piu contesto per apprendere correzioni su dettati lunghi e non aggiunge piu il punto finale automatico.",
+        "releaseTag": "stable-keyvoice-v1.2.9",
+        "apkAsset": "keyvoice-1.2.9.apk",
+        "exeAsset": "",
+        "sizeBytes": 3219212
+      },
       {
         "version": "1.2.8",
         "releaseDate": "2026-06-03",
