@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.7",
-      "releaseDate": "2026-06-02",
-      "changelog": "Fix Fase 2: il modello ora tratta sempre il testo come trascrizione da pulire e non deve rispondere alle domande dettate. Migliorato feedback apprendimento vocabolario: toast nella tastiera e pannello/toast in modalita accessibilita quando una correzione utente aggiunge nuove parole al dizionario.",
-      "releaseTag": "stable-keyvoice-v1.2.7",
-      "apkAsset": "keyvoice-1.2.7.apk",
+      "version": "1.2.8",
+      "releaseDate": "2026-06-03",
+      "changelog": "Dashboard ridisegnata attorno alla scorciatoia accessibilita Android 13+, nuova configurazione guidata, impostazioni espandibili, pipeline di dettatura condivisa tra accessibilita e tastiera, default IME meno invasivi e miglioramenti di stabilita.",
+      "releaseTag": "stable-keyvoice-v1.2.8",
+      "apkAsset": "keyvoice-1.2.8.apk",
       "exeAsset": "",
-      "sizeBytes": 2247967
+      "sizeBytes": 3218300
     },
     "beta": {
-      "version": "1.2.7",
-      "releaseDate": "2026-06-02",
-      "changelog": "Fix Fase 2: il modello ora tratta sempre il testo come trascrizione da pulire e non deve rispondere alle domande dettate. Migliorato feedback apprendimento vocabolario: toast nella tastiera e pannello/toast in modalita accessibilita quando una correzione utente aggiunge nuove parole al dizionario.",
-      "releaseTag": "stable-keyvoice-v1.2.7",
-      "apkAsset": "keyvoice-1.2.7.apk",
+      "version": "1.2.8",
+      "releaseDate": "2026-06-03",
+      "changelog": "Dashboard ridisegnata attorno alla scorciatoia accessibilita Android 13+, nuova configurazione guidata, impostazioni espandibili, pipeline di dettatura condivisa tra accessibilita e tastiera, default IME meno invasivi e miglioramenti di stabilita.",
+      "releaseTag": "stable-keyvoice-v1.2.8",
+      "apkAsset": "keyvoice-1.2.8.apk",
       "exeAsset": "",
-      "sizeBytes": 2247967
+      "sizeBytes": 3218300
     },
     "history": [
+      {
+        "version": "1.2.7",
+        "releaseDate": "2026-06-02",
+        "changelog": "Fix Fase 2: il modello ora tratta sempre il testo come trascrizione da pulire e non deve rispondere alle domande dettate. Migliorato feedback apprendimento vocabolario: toast nella tastiera e pannello/toast in modalita accessibilita quando una correzione utente aggiunge nuove parole al dizionario.",
+        "releaseTag": "stable-keyvoice-v1.2.7",
+        "apkAsset": "keyvoice-1.2.7.apk",
+        "exeAsset": "",
+        "sizeBytes": 2247967
+      },
       {
         "version": "1.2.6",
         "releaseDate": "2026-06-02",
