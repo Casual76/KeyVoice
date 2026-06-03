@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.8",
+      "version": "1.2.9",
       "releaseDate": "2026-06-03",
-      "changelog": "Dashboard ridisegnata attorno alla scorciatoia accessibilita Android 13+, nuova configurazione guidata, impostazioni espandibili, pipeline di dettatura condivisa tra accessibilita e tastiera, default IME meno invasivi e miglioramenti di stabilita.",
-      "releaseTag": "stable-keyvoice-v1.2.8",
-      "apkAsset": "keyvoice-1.2.8.apk",
+      "changelog": "Hotfix inserimento e apprendimento: la modalita accessibilita ora verifica che il testo sia realmente scritto prima di confermare l'inserimento, usa fallback piu affidabile, legge piu contesto per apprendere correzioni su dettati lunghi e non aggiunge piu il punto finale automatico.",
+      "releaseTag": "stable-keyvoice-v1.2.9",
+      "apkAsset": "keyvoice-1.2.9.apk",
       "exeAsset": "",
-      "sizeBytes": 3218300
+      "sizeBytes": 3219212
     },
     "beta": {
-      "version": "1.2.8",
+      "version": "1.2.9",
       "releaseDate": "2026-06-03",
-      "changelog": "Dashboard ridisegnata attorno alla scorciatoia accessibilita Android 13+, nuova configurazione guidata, impostazioni espandibili, pipeline di dettatura condivisa tra accessibilita e tastiera, default IME meno invasivi e miglioramenti di stabilita.",
-      "releaseTag": "stable-keyvoice-v1.2.8",
-      "apkAsset": "keyvoice-1.2.8.apk",
+      "changelog": "Hotfix inserimento e apprendimento: la modalita accessibilita ora verifica che il testo sia realmente scritto prima di confermare l'inserimento, usa fallback piu affidabile, legge piu contesto per apprendere correzioni su dettati lunghi e non aggiunge piu il punto finale automatico.",
+      "releaseTag": "stable-keyvoice-v1.2.9",
+      "apkAsset": "keyvoice-1.2.9.apk",
       "exeAsset": "",
-      "sizeBytes": 3218300
+      "sizeBytes": 3219212
     },
     "history": [
+      {
+        "version": "1.2.8",
+        "releaseDate": "2026-06-03",
+        "changelog": "Dashboard ridisegnata attorno alla scorciatoia accessibilita Android 13+, nuova configurazione guidata, impostazioni espandibili, pipeline di dettatura condivisa tra accessibilita e tastiera, default IME meno invasivi e miglioramenti di stabilita.",
+        "releaseTag": "stable-keyvoice-v1.2.8",
+        "apkAsset": "keyvoice-1.2.8.apk",
+        "exeAsset": "",
+        "sizeBytes": 3218300
+      },
       {
         "version": "1.2.7",
         "releaseDate": "2026-06-02",
