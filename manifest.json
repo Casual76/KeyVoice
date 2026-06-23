@@ -15,24 +15,141 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.1.0",
-      "releaseDate": "2026-05-26",
-      "changelog": "Nuova modalita one-shot: KeyVoice viene registrata come IME vocale ausiliario, avvia la registrazione quando viene selezionata in campi sicuri e torna automaticamente alla tastiera precedente dopo la dettatura. Aggiunti controlli in dashboard per avvio automatico e ritorno alla tastiera precedente.",
-      "releaseTag": "stable-keyvoice-v1.1.0",
-      "apkAsset": "keyvoice-1.1.0.apk",
+      "version": "1.2.12",
+      "releaseDate": "2026-06-23",
+      "changelog": "Updater in-app Pampa Store, nuova card aggiornamenti, overlay accessibilita animato e maggiore affidabilita della scorciatoia KeyVoice.",
+      "releaseTag": "stable-keyvoice-v1.2.12",
+      "apkAsset": "keyvoice-1.2.12.apk",
       "exeAsset": "",
-      "sizeBytes": 2211049
+      "sizeBytes": 3342671
     },
     "beta": {
-      "version": "1.1.0",
-      "releaseDate": "2026-05-26",
-      "changelog": "Nuova modalita one-shot: KeyVoice viene registrata come IME vocale ausiliario, avvia la registrazione quando viene selezionata in campi sicuri e torna automaticamente alla tastiera precedente dopo la dettatura. Aggiunti controlli in dashboard per avvio automatico e ritorno alla tastiera precedente.",
-      "releaseTag": "stable-keyvoice-v1.1.0",
-      "apkAsset": "keyvoice-1.1.0.apk",
+      "version": "1.2.12",
+      "releaseDate": "2026-06-23",
+      "changelog": "Updater in-app Pampa Store, nuova card aggiornamenti, overlay accessibilita animato e maggiore affidabilita della scorciatoia KeyVoice.",
+      "releaseTag": "stable-keyvoice-v1.2.12",
+      "apkAsset": "keyvoice-1.2.12.apk",
       "exeAsset": "",
-      "sizeBytes": 2211049
+      "sizeBytes": 3342671
     },
     "history": [
+      {
+        "version": "1.2.11",
+        "releaseDate": "2026-06-03",
+        "changelog": "Aggiunta impostazione per disattivare l'apprendimento automatico del vocabolario. L'apprendimento automatico ora e spento di default e KeyVoice impara nuove parole solo se l'utente lo abilita esplicitamente.",
+        "releaseTag": "stable-keyvoice-v1.2.11",
+        "apkAsset": "keyvoice-1.2.11.apk",
+        "exeAsset": "",
+        "sizeBytes": 3221141
+      },
+      {
+        "version": "1.2.10",
+        "releaseDate": "2026-06-03",
+        "changelog": "Hotfix apprendimento vocabolario: KeyVoice ora impara solo da correzioni applicate al testo appena inserito da KeyVoice, scarta il tracking quando l'utente continua a scrivere manualmente e rende l'algoritmo piu conservativo per evitare parole comuni aggiunte per errore.",
+        "releaseTag": "stable-keyvoice-v1.2.10",
+        "apkAsset": "keyvoice-1.2.10.apk",
+        "exeAsset": "",
+        "sizeBytes": 3219727
+      },
+      {
+        "version": "1.2.9",
+        "releaseDate": "2026-06-03",
+        "changelog": "Hotfix inserimento e apprendimento: la modalita accessibilita ora verifica che il testo sia realmente scritto prima di confermare l'inserimento, usa fallback piu affidabile, legge piu contesto per apprendere correzioni su dettati lunghi e non aggiunge piu il punto finale automatico.",
+        "releaseTag": "stable-keyvoice-v1.2.9",
+        "apkAsset": "keyvoice-1.2.9.apk",
+        "exeAsset": "",
+        "sizeBytes": 3219212
+      },
+      {
+        "version": "1.2.8",
+        "releaseDate": "2026-06-03",
+        "changelog": "Dashboard ridisegnata attorno alla scorciatoia accessibilita Android 13+, nuova configurazione guidata, impostazioni espandibili, pipeline di dettatura condivisa tra accessibilita e tastiera, default IME meno invasivi e miglioramenti di stabilita.",
+        "releaseTag": "stable-keyvoice-v1.2.8",
+        "apkAsset": "keyvoice-1.2.8.apk",
+        "exeAsset": "",
+        "sizeBytes": 3218300
+      },
+      {
+        "version": "1.2.7",
+        "releaseDate": "2026-06-02",
+        "changelog": "Fix Fase 2: il modello ora tratta sempre il testo come trascrizione da pulire e non deve rispondere alle domande dettate. Migliorato feedback apprendimento vocabolario: toast nella tastiera e pannello/toast in modalita accessibilita quando una correzione utente aggiunge nuove parole al dizionario.",
+        "releaseTag": "stable-keyvoice-v1.2.7",
+        "apkAsset": "keyvoice-1.2.7.apk",
+        "exeAsset": "",
+        "sizeBytes": 2247967
+      },
+      {
+        "version": "1.2.6",
+        "releaseDate": "2026-06-02",
+        "changelog": "Fix tasto accessibilita: oltre al callback del pulsante accessibilita, KeyVoice ora intercetta la scorciatoia volume su/giu quando il servizio e gia attivo, usando lo stesso toggle start/stop. Aggiunto filtro tasti dichiarato nel servizio e anti-rimbalzo all avvio per evitare stop immediati.",
+        "releaseTag": "stable-keyvoice-v1.2.6",
+        "apkAsset": "keyvoice-1.2.6.apk",
+        "exeAsset": "",
+        "sizeBytes": 2246581
+      },
+      {
+        "version": "1.2.5",
+        "releaseDate": "2026-06-02",
+        "changelog": "Fix feedback accessibilita: il pannello non viene piu nascosto/scartato quando il tasto accessibilita cambia focus o finestra durante la registrazione. Il servizio resta attivo dopo la sessione, cosi il tasto accessibilita puo comportarsi da start/stop e mostrare gli stati di elaborazione.",
+        "releaseTag": "stable-keyvoice-v1.2.5",
+        "apkAsset": "keyvoice-1.2.5.apk",
+        "exeAsset": "",
+        "sizeBytes": 2246191
+      },
+      {
+        "version": "1.2.4",
+        "releaseDate": "2026-06-02",
+        "changelog": "Fix scorciatoia accessibilita: ripremendo il tasto durante la registrazione ora ferma la registrazione e mostra subito lo stato di elaborazione. Aggiunto flag Android per ricevere il pulsante accessibilita e protezione contro stop doppi.",
+        "releaseTag": "stable-keyvoice-v1.2.4",
+        "apkAsset": "keyvoice-1.2.4.apk",
+        "exeAsset": "",
+        "sizeBytes": 2246261
+      },
+      {
+        "version": "1.2.3",
+        "releaseDate": "2026-06-02",
+        "changelog": "Accesso rapido via accessibilita con pannello flottante persistente: stati di registrazione, trascrizione, correzione, rete lenta, fallback ed errori ora restano visibili. Migliorata la dashboard con stato del servizio accessibilita e protezione della API key salvata, che non viene piu mostrata nel campo impostazioni.",
+        "releaseTag": "stable-keyvoice-v1.2.3",
+        "apkAsset": "keyvoice-1.2.3.apk",
+        "exeAsset": "",
+        "sizeBytes": 2246044
+      },
+      {
+        "version": "1.2.2",
+        "releaseDate": "2026-05-27",
+        "changelog": "Fix shortcut accessibilita: usare di nuovo la combinazione per terminare la dettatura ora conserva l audio registrato e completa trascrizione e inserimento invece di scartare la registrazione.",
+        "releaseTag": "stable-keyvoice-v1.2.2",
+        "apkAsset": "keyvoice-1.2.2.apk",
+        "exeAsset": "",
+        "sizeBytes": 2229208
+      },
+      {
+        "version": "1.2.1",
+        "releaseDate": "2026-05-27",
+        "changelog": "Shortcut accessibilita one-shot: la scorciatoia avvia subito la dettatura, il tasto stop compare solo durante la registrazione e KeyVoice si disattiva automaticamente a fine uso.",
+        "releaseTag": "stable-keyvoice-v1.2.1",
+        "apkAsset": "keyvoice-1.2.1.apk",
+        "exeAsset": "",
+        "sizeBytes": 2229012
+      },
+      {
+        "version": "1.2.0",
+        "releaseDate": "2026-05-27",
+        "changelog": "Aggiunto metodo opzionale di dettatura tramite servizio accessibilita con pulsante flottante. Il pulsante compare solo quando la tastiera e aperta, si puo trascinare e la posizione viene ricordata. Aggiunto reset posizione dalle impostazioni.",
+        "releaseTag": "stable-keyvoice-v1.2.0",
+        "apkAsset": "keyvoice-1.2.0.apk",
+        "exeAsset": "",
+        "sizeBytes": 2228211
+      },
+      {
+        "version": "1.1.0",
+        "releaseDate": "2026-05-26",
+        "changelog": "Nuova modalita one-shot: KeyVoice viene registrata come IME vocale ausiliario, avvia la registrazione quando viene selezionata in campi sicuri e torna automaticamente alla tastiera precedente dopo la dettatura. Aggiunti controlli in dashboard per avvio automatico e ritorno alla tastiera precedente.",
+        "releaseTag": "stable-keyvoice-v1.1.0",
+        "apkAsset": "keyvoice-1.1.0.apk",
+        "exeAsset": "",
+        "sizeBytes": 2211049
+      },
       {
         "version": "1.0.4",
         "releaseDate": "2026-05-26",
