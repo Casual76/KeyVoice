@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.11",
-      "releaseDate": "2026-06-03",
-      "changelog": "Aggiunta impostazione per disattivare l'apprendimento automatico del vocabolario. L'apprendimento automatico ora e spento di default e KeyVoice impara nuove parole solo se l'utente lo abilita esplicitamente.",
-      "releaseTag": "stable-keyvoice-v1.2.11",
-      "apkAsset": "keyvoice-1.2.11.apk",
+      "version": "1.2.12",
+      "releaseDate": "2026-06-23",
+      "changelog": "Updater in-app Pampa Store, nuova card aggiornamenti, overlay accessibilita animato e maggiore affidabilita della scorciatoia KeyVoice.",
+      "releaseTag": "stable-keyvoice-v1.2.12",
+      "apkAsset": "keyvoice-1.2.12.apk",
       "exeAsset": "",
-      "sizeBytes": 3221141
+      "sizeBytes": 3342671
     },
     "beta": {
-      "version": "1.2.11",
-      "releaseDate": "2026-06-03",
-      "changelog": "Aggiunta impostazione per disattivare l'apprendimento automatico del vocabolario. L'apprendimento automatico ora e spento di default e KeyVoice impara nuove parole solo se l'utente lo abilita esplicitamente.",
-      "releaseTag": "stable-keyvoice-v1.2.11",
-      "apkAsset": "keyvoice-1.2.11.apk",
+      "version": "1.2.12",
+      "releaseDate": "2026-06-23",
+      "changelog": "Updater in-app Pampa Store, nuova card aggiornamenti, overlay accessibilita animato e maggiore affidabilita della scorciatoia KeyVoice.",
+      "releaseTag": "stable-keyvoice-v1.2.12",
+      "apkAsset": "keyvoice-1.2.12.apk",
       "exeAsset": "",
-      "sizeBytes": 3221141
+      "sizeBytes": 3342671
     },
     "history": [
+      {
+        "version": "1.2.11",
+        "releaseDate": "2026-06-03",
+        "changelog": "Aggiunta impostazione per disattivare l'apprendimento automatico del vocabolario. L'apprendimento automatico ora e spento di default e KeyVoice impara nuove parole solo se l'utente lo abilita esplicitamente.",
+        "releaseTag": "stable-keyvoice-v1.2.11",
+        "apkAsset": "keyvoice-1.2.11.apk",
+        "exeAsset": "",
+        "sizeBytes": 3221141
+      },
       {
         "version": "1.2.10",
         "releaseDate": "2026-06-03",
