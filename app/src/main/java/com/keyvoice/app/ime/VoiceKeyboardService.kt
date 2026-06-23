@@ -21,15 +21,17 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import com.keyvoice.app.MainSetupActivity
 import com.keyvoice.app.R
 import com.keyvoice.app.api.RefinementRepository
-import com.keyvoice.app.api.TranscriptionRepository
 import com.keyvoice.app.audio.AudioRecorder
-import com.keyvoice.app.settings.DictationHistoryItem
+import com.keyvoice.app.dictation.DictationHistoryItems
+import com.keyvoice.app.dictation.DictationPipeline
 import com.keyvoice.app.settings.DictationHistoryStore
 import com.keyvoice.app.settings.PreferencesManager
+import com.keyvoice.app.update.KeyVoiceUpdateCoordinator
 import com.keyvoice.app.ui.KeyboardViewController
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -56,8 +58,8 @@ class VoiceKeyboardService : InputMethodService() {
 
     private lateinit var prefs: PreferencesManager
     private lateinit var audioRecorder: AudioRecorder
-    private lateinit var transcriptionRepo: TranscriptionRepository
     private lateinit var refinementRepo: RefinementRepository
+    private lateinit var dictationPipeline: DictationPipeline
     private lateinit var historyStore: DictationHistoryStore
 
     private var viewController: KeyboardViewController? = null
@@ -98,10 +100,18 @@ class VoiceKeyboardService : InputMethodService() {
         super.onCreate()
         prefs = PreferencesManager.getInstance(this)
         audioRecorder = AudioRecorder(this)
-        transcriptionRepo = TranscriptionRepository()
         refinementRepo = RefinementRepository()
+        dictationPipeline = DictationPipeline()
         historyStore = DictationHistoryStore(this)
         serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        serviceScope?.launch {
+            runCatching {
+                KeyVoiceUpdateCoordinator(this@VoiceKeyboardService, prefs)
+                    .checkForUpdate(manual = false, notifyIfAvailable = true)
+            }.onFailure { error ->
+                Log.d(TAG, "Automatic update check skipped", error)
+            }
+        }
     }
 
     override fun onCreateInputView(): View {
@@ -290,75 +300,68 @@ class VoiceKeyboardService : InputMethodService() {
     }
 
     private fun processAudio(audioFile: java.io.File) {
-        val apiKey = prefs.apiKey
-        val language = prefs.getWhisperLanguageParam()
-        val languageFullName = prefs.getLanguageFullName()
-        val whisperModel = prefs.whisperModel
-        val llmModel = prefs.llmModel
-        val isPhase2Enabled = prefs.isPhase2Enabled
-        val systemPrompt = prefs.getResolvedSystemPrompt()
-        val vocabulary = prefs.effectiveVocabulary
-        val promptPreset = prefs.promptPreset
+        val request = DictationPipeline.Request(
+            apiKey = prefs.apiKey,
+            whisperModel = prefs.whisperModel,
+            language = prefs.getWhisperLanguageParam(),
+            languageFullName = prefs.getLanguageFullName(),
+            llmModel = prefs.llmModel,
+            phase2Enabled = prefs.isPhase2Enabled,
+            systemPrompt = prefs.getResolvedSystemPrompt(),
+            vocabulary = prefs.effectiveVocabulary,
+            promptPreset = prefs.promptPreset.id
+        )
 
         serviceScope?.launch {
             try {
-                currentState = KeyboardViewController.State.PROCESSING_PHASE1
-                viewController?.setState(KeyboardViewController.State.PROCESSING_PHASE1)
-                startApiStatusHints()
-
-                val transcriptionResult = withContext(Dispatchers.IO) {
-                    transcriptionRepo.transcribe(audioFile, apiKey, whisperModel, language, vocabulary)
+                val pipelineResult = withContext(Dispatchers.IO) {
+                    dictationPipeline.process(audioFile, request) { stage ->
+                        withContext(Dispatchers.Main) {
+                            clearApiStatusHints()
+                            when (stage) {
+                                DictationPipeline.Stage.TRANSCRIBING -> {
+                                    currentState = KeyboardViewController.State.PROCESSING_PHASE1
+                                    viewController?.setState(KeyboardViewController.State.PROCESSING_PHASE1)
+                                    startApiStatusHints()
+                                }
+                                DictationPipeline.Stage.REFINING -> {
+                                    currentState = KeyboardViewController.State.PROCESSING_PHASE2
+                                    viewController?.setState(KeyboardViewController.State.PROCESSING_PHASE2)
+                                    startApiStatusHints()
+                                }
+                            }
+                        }
+                    }
                 }
 
                 clearApiStatusHints()
-                audioRecorder.cleanupFile()
-
-                val rawText = transcriptionResult.getOrElse { error ->
+                val output = pipelineResult.getOrElse { error ->
                     showError(error.message ?: getString(R.string.error_api_generic, 0))
                     return@launch
                 }
 
-                var finalText = rawText
-                var phase2Used = false
-                var notice: String? = null
-
-                if (isPhase2Enabled) {
-                    currentState = KeyboardViewController.State.PROCESSING_PHASE2
-                    viewController?.setState(KeyboardViewController.State.PROCESSING_PHASE2)
-                    startApiStatusHints()
-
-                    val refinementResult = withContext(Dispatchers.IO) {
-                        refinementRepo.refine(rawText, apiKey, llmModel, languageFullName, systemPrompt)
+                val notice = when (output.fallbackReason) {
+                    DictationPipeline.FallbackReason.PHASE2_DISABLED -> {
+                        viewController?.showTransientStatus(getString(R.string.state_quick_insert))
+                        getString(R.string.feedback_phase2_disabled)
                     }
-
-                    clearApiStatusHints()
-                    refinementResult.fold(
-                        onSuccess = {
-                            finalText = it
-                            phase2Used = true
-                        },
-                        onFailure = {
-                            finalText = SpokenPunctuationNormalizer.normalize(rawText)
-                            notice = getString(R.string.feedback_phase2_fallback)
-                        }
-                    )
-                } else {
-                    viewController?.showTransientStatus(getString(R.string.state_quick_insert))
-                    finalText = SpokenPunctuationNormalizer.normalize(rawText)
-                    notice = getString(R.string.feedback_phase2_disabled)
+                    DictationPipeline.FallbackReason.PHASE2_UNAVAILABLE -> {
+                        getString(R.string.feedback_phase2_fallback)
+                    }
+                    null -> null
                 }
 
                 val pending = PendingDictation(
-                    rawText = rawText,
-                    finalText = finalText,
-                    phase2Used = phase2Used,
-                    promptPreset = promptPreset.id
+                    rawText = output.rawText,
+                    finalText = output.finalText,
+                    phase2Used = output.phase2Used,
+                    promptPreset = output.promptPreset
                 )
 
-                if (shouldPreview(finalText)) {
+                if (shouldPreview(output.finalText)) {
                     pendingPreview = pending
                     currentState = KeyboardViewController.State.PREVIEW
-                    viewController?.setPreviewText(finalText)
+                    viewController?.setPreviewText(output.finalText)
                     viewController?.setState(KeyboardViewController.State.PREVIEW)
                     viewController?.hidePostInsertActions()
                     notice?.let { showNotice(it) }
@@ -373,6 +376,8 @@ class VoiceKeyboardService : InputMethodService() {
             } catch (e: Exception) {
                 clearApiStatusHints()
                 showError(e.message ?: getString(R.string.error_api_generic, 0))
+            } finally {
+                audioRecorder.cleanupFile()
             }
         }
     }
@@ -470,9 +475,7 @@ class VoiceKeyboardService : InputMethodService() {
 
         if (saveHistory) {
             historyStore.add(
-                DictationHistoryItem(
-                    id = System.currentTimeMillis().toString(),
-                    createdAtMillis = System.currentTimeMillis(),
+                DictationHistoryItems.create(
                     rawText = rawText,
                     finalText = finalText,
                     insertedText = insertedText,
@@ -692,6 +695,11 @@ class VoiceKeyboardService : InputMethodService() {
     }
 
     private fun learnFromTrackedInsertion() {
+        if (!prefs.autoLearningEnabled) {
+            trackedInsertion = null
+            return
+        }
+
         val tracked = trackedInsertion ?: return
         val extractedText = currentInputConnection
             ?.getExtractedText(ExtractedTextRequest(), 0)
@@ -708,7 +716,10 @@ class VoiceKeyboardService : InputMethodService() {
             appendedText.any { it.isWhitespace() } &&
             tracked.afterContext.isEmpty()
 
-        if (looksLikeContinuation) return
+        if (looksLikeContinuation) {
+            trackedInsertion = null
+            return
+        }
 
         if (observedText != tracked.originalText) {
             val learnedTerms = TextCorrectionLearner.extractNewTerms(tracked.originalText, observedText)
@@ -791,6 +802,7 @@ class VoiceKeyboardService : InputMethodService() {
         } else {
             getString(R.string.feedback_learned_many, additions.size)
         }
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
         viewController?.showLearningFeedback(message)
         uiHandler.postDelayed({
             if (lastLearnedTerms == additions) {

@@ -49,8 +49,11 @@ object TextCorrectionLearner {
         val originalVocabulary = originalWords.map { it.normalized }.toSet()
         val additions = linkedSetOf<String>()
 
-        changedEdited.forEach { word ->
-            if (word.normalized !in originalVocabulary && isLearnableTerm(word.value)) {
+        changedEdited.forEachIndexed { index, word ->
+            val replacedWord = if (changedOriginal.size == changedEdited.size) {
+                changedOriginal.getOrNull(index)?.value
+            } else null
+            if (word.normalized !in originalVocabulary && isLearnableTerm(word.value, replacedWord)) {
                 additions += word.value
             }
         }
@@ -67,16 +70,55 @@ object TextCorrectionLearner {
             .toList()
     }
 
-    private fun isLearnableTerm(term: String): Boolean {
+    private fun isLearnableTerm(term: String, replacedWord: String?): Boolean {
         val lettersAndDigits = term.count { it.isLetterOrDigit() }
         if (lettersAndDigits < 3 || term.length > MAX_TERM_LENGTH) return false
         if (term.all { it.isDigit() }) return false
 
-        val hasSignal = term.any { it.isUpperCase() } ||
+        val hasExplicitSignal = term.any { it.isUpperCase() } ||
             term.any { it.isDigit() } ||
-            lettersAndDigits >= 5
+            term.any { it in "-_" }
 
-        return hasSignal
+        return hasExplicitSignal || isLikelySpeechCorrection(replacedWord, term)
+    }
+
+    private fun isLikelySpeechCorrection(original: String?, corrected: String): Boolean {
+        if (original.isNullOrBlank()) return false
+        val originalKey = original.normalizedKey()
+        val correctedKey = corrected.normalizedKey()
+        if (originalKey.length < 3 || correctedKey.length < 3) return false
+        if (originalKey == correctedKey) return false
+
+        val distance = levenshteinDistance(originalKey, correctedKey)
+        return distance <= 2 ||
+            originalKey.contains(correctedKey) ||
+            correctedKey.contains(originalKey)
+    }
+
+    private fun levenshteinDistance(a: String, b: String): Int {
+        if (a == b) return 0
+        if (a.isEmpty()) return b.length
+        if (b.isEmpty()) return a.length
+
+        var previous = IntArray(b.length + 1) { it }
+        var current = IntArray(b.length + 1)
+
+        for (i in a.indices) {
+            current[0] = i + 1
+            for (j in b.indices) {
+                val substitutionCost = if (a[i] == b[j]) 0 else 1
+                current[j + 1] = minOf(
+                    current[j] + 1,
+                    previous[j + 1] + 1,
+                    previous[j] + substitutionCost
+                )
+            }
+            val swap = previous
+            previous = current
+            current = swap
+        }
+
+        return previous[b.length]
     }
 
     private fun String.trimWordEdges(): String {

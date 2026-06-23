@@ -2,6 +2,7 @@ package com.keyvoice.app.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener
 import android.util.Log
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
@@ -29,10 +30,18 @@ class PreferencesManager private constructor(private val context: Context) {
         private const val KEY_VOCABULARY = "vocabulary"
         private const val KEY_MANUAL_VOCABULARY = "manual_vocabulary"
         private const val KEY_LEARNED_VOCABULARY = "learned_vocabulary"
+        private const val KEY_AUTO_LEARNING_ENABLED = "auto_learning_enabled"
         private const val KEY_PROMPT_PRESET = "prompt_preset"
         private const val KEY_PREVIEW_LONG_TEXT_ENABLED = "preview_long_text_enabled"
         private const val KEY_RETURN_TO_PREVIOUS_KEYBOARD = "return_to_previous_keyboard"
         private const val KEY_AUTO_START_RECORDING = "auto_start_recording"
+        private const val KEY_ACCESSIBILITY_DICTATION_ENABLED = "accessibility_dictation_enabled"
+        private const val KEY_ACCESSIBILITY_BUBBLE_X_FRACTION = "accessibility_bubble_x_fraction"
+        private const val KEY_ACCESSIBILITY_BUBBLE_Y_FRACTION = "accessibility_bubble_y_fraction"
+        private const val KEY_ACCESSIBILITY_FIRST_DEFAULTS_APPLIED = "accessibility_first_defaults_applied"
+        private const val KEY_LAST_AUTOMATIC_UPDATE_CHECK_MILLIS = "last_automatic_update_check_millis"
+        private const val KEY_NOTIFIED_STABLE_UPDATE_VERSION = "notified_stable_update_version"
+        private const val KEY_IGNORED_STABLE_UPDATE_VERSION = "ignored_stable_update_version"
         private const val MAX_VOCABULARY_TERMS = 250
 
         // Defaults
@@ -44,9 +53,13 @@ class PreferencesManager private constructor(private val context: Context) {
         const val DEFAULT_HAPTIC_FEEDBACK = true
         const val DEFAULT_SYSTEM_PROMPT = PromptPreset.DEFAULT_CLEAN_PROMPT
         const val DEFAULT_VOCABULARY = ""
+        const val DEFAULT_AUTO_LEARNING_ENABLED = false
         const val DEFAULT_PREVIEW_LONG_TEXT_ENABLED = true
         const val DEFAULT_RETURN_TO_PREVIOUS_KEYBOARD = true
-        const val DEFAULT_AUTO_START_RECORDING = true
+        const val DEFAULT_AUTO_START_RECORDING = false
+        const val DEFAULT_ACCESSIBILITY_DICTATION_ENABLED = true
+        const val DEFAULT_ACCESSIBILITY_BUBBLE_X_FRACTION = 0.96f
+        const val DEFAULT_ACCESSIBILITY_BUBBLE_Y_FRACTION = 0.5f
 
         // Language options
         const val LANGUAGE_ITALIAN = "it"
@@ -74,6 +87,10 @@ class PreferencesManager private constructor(private val context: Context) {
 
     private val encryptedPrefs: SharedPreferences by lazy {
         createEncryptedPrefs()
+    }
+
+    init {
+        applyAccessibilityFirstDefaultsIfNeeded()
     }
 
     private fun createEncryptedPrefs(): SharedPreferences {
@@ -182,6 +199,11 @@ class PreferencesManager private constructor(private val context: Context) {
         get() = prefs.getString(KEY_LEARNED_VOCABULARY, DEFAULT_VOCABULARY) ?: DEFAULT_VOCABULARY
         private set(value) = prefs.edit().putString(KEY_LEARNED_VOCABULARY, value).apply()
 
+    /** Whether KeyVoice can learn vocabulary from user corrections after insertion. */
+    var autoLearningEnabled: Boolean
+        get() = prefs.getBoolean(KEY_AUTO_LEARNING_ENABLED, DEFAULT_AUTO_LEARNING_ENABLED)
+        set(value) = prefs.edit().putBoolean(KEY_AUTO_LEARNING_ENABLED, value).apply()
+
     val manualVocabularyTerms: List<String>
         get() = splitVocabulary(manualVocabulary)
 
@@ -214,6 +236,58 @@ class PreferencesManager private constructor(private val context: Context) {
     var autoStartRecording: Boolean
         get() = prefs.getBoolean(KEY_AUTO_START_RECORDING, DEFAULT_AUTO_START_RECORDING)
         set(value) = prefs.edit().putBoolean(KEY_AUTO_START_RECORDING, value).apply()
+
+    /** Whether the optional Accessibility shortcut/bubble dictation mode is active when its service is enabled. */
+    var accessibilityDictationEnabled: Boolean
+        get() = prefs.getBoolean(KEY_ACCESSIBILITY_DICTATION_ENABLED, DEFAULT_ACCESSIBILITY_DICTATION_ENABLED)
+        set(value) = prefs.edit().putBoolean(KEY_ACCESSIBILITY_DICTATION_ENABLED, value).apply()
+
+    /** Stored horizontal bubble position, relative to available screen space. */
+    var accessibilityBubbleXFraction: Float
+        get() = prefs.getFloat(
+            KEY_ACCESSIBILITY_BUBBLE_X_FRACTION,
+            DEFAULT_ACCESSIBILITY_BUBBLE_X_FRACTION
+        ).coerceIn(0f, 1f)
+        set(value) = prefs.edit()
+            .putFloat(KEY_ACCESSIBILITY_BUBBLE_X_FRACTION, value.coerceIn(0f, 1f))
+            .apply()
+
+    /** Stored vertical bubble position, relative to available screen space. */
+    var accessibilityBubbleYFraction: Float
+        get() = prefs.getFloat(
+            KEY_ACCESSIBILITY_BUBBLE_Y_FRACTION,
+            DEFAULT_ACCESSIBILITY_BUBBLE_Y_FRACTION
+        ).coerceIn(0f, 1f)
+        set(value) = prefs.edit()
+            .putFloat(KEY_ACCESSIBILITY_BUBBLE_Y_FRACTION, value.coerceIn(0f, 1f))
+            .apply()
+
+    fun resetAccessibilityBubblePosition() {
+        prefs.edit()
+            .remove(KEY_ACCESSIBILITY_BUBBLE_X_FRACTION)
+            .remove(KEY_ACCESSIBILITY_BUBBLE_Y_FRACTION)
+            .apply()
+    }
+
+    var lastAutomaticUpdateCheckMillis: Long
+        get() = prefs.getLong(KEY_LAST_AUTOMATIC_UPDATE_CHECK_MILLIS, 0L)
+        set(value) = prefs.edit().putLong(KEY_LAST_AUTOMATIC_UPDATE_CHECK_MILLIS, value).apply()
+
+    var notifiedStableUpdateVersion: String
+        get() = prefs.getString(KEY_NOTIFIED_STABLE_UPDATE_VERSION, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_NOTIFIED_STABLE_UPDATE_VERSION, value).apply()
+
+    var ignoredStableUpdateVersion: String
+        get() = prefs.getString(KEY_IGNORED_STABLE_UPDATE_VERSION, "") ?: ""
+        set(value) = prefs.edit().putString(KEY_IGNORED_STABLE_UPDATE_VERSION, value).apply()
+
+    fun registerPreferenceListener(listener: OnSharedPreferenceChangeListener) {
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    fun unregisterPreferenceListener(listener: OnSharedPreferenceChangeListener) {
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
+    }
 
     /** Returns the system prompt resolved from the selected preset. */
     fun getResolvedSystemPrompt(): String {
@@ -267,6 +341,16 @@ class PreferencesManager private constructor(private val context: Context) {
 
     fun clearLearnedVocabulary() {
         learnedVocabulary = DEFAULT_VOCABULARY
+    }
+
+    private fun applyAccessibilityFirstDefaultsIfNeeded() {
+        if (prefs.getBoolean(KEY_ACCESSIBILITY_FIRST_DEFAULTS_APPLIED, false)) return
+
+        prefs.edit()
+            .putBoolean(KEY_AUTO_START_RECORDING, false)
+            .putBoolean(KEY_ACCESSIBILITY_DICTATION_ENABLED, true)
+            .putBoolean(KEY_ACCESSIBILITY_FIRST_DEFAULTS_APPLIED, true)
+            .apply()
     }
 
     /** Returns the language display name for the configured language code */

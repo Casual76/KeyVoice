@@ -11,6 +11,7 @@
     <!-- Keyboard (Dark) -->
     <color name="keyboard_background">#1C1C1E</color>
     <color name="keyboard_bottom_bar">#2C2C2E</color>
+    <color name="accessibility_overlay_stroke">#556C63FF</color>
 
     <!-- Text (Dark) -->
     <color name="text_primary">#E6E1E5</color>

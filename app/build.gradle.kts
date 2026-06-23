@@ -16,10 +16,10 @@ android {
 
     defaultConfig {
         applicationId = "com.keyvoice.app"
-        minSdk = 26
+        minSdk = 33
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.1.0"
+        versionCode = 19
+        versionName = "1.2.12"
     }
 
     signingConfigs {

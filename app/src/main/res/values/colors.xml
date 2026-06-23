@@ -21,6 +21,7 @@
     <!-- Keyboard -->
     <color name="keyboard_background">#F2F1F6</color>
     <color name="keyboard_bottom_bar">#E8E7ED</color>
+    <color name="accessibility_overlay_stroke">#336C63FF</color>
 
     <!-- Mic Button -->
     <color name="mic_idle">#6C63FF</color>

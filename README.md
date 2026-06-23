@@ -1,12 +1,13 @@
 # KeyVoice
 
-**Tastiera vocale Android con trascrizione intelligente**
+**Dettatura rapida Android con trascrizione intelligente**
 
-KeyVoice e' una tastiera personalizzata (IME) per Android che trasforma la voce in testo usando le API Groq. Supporta la trascrizione vocale tramite Whisper e il raffinamento automatico del testo tramite un modello LLM.
+KeyVoice trasforma la voce in testo usando le API Groq. La modalita principale usa la scorciatoia accessibilita di Android 13+ per dettare nel campo attivo senza cambiare tastiera; la tastiera personalizzata (IME) resta disponibile come percorso secondario.
 
 ## Funzionalita'
 
-- **Tastiera vocale**: interfaccia minimale centrata sul microfono.
+- **Scorciatoia accessibilita**: dettatura rapida nel campo attivo con pannello flottante.
+- **Tastiera vocale secondaria**: interfaccia minimale centrata sul microfono.
 - **Trascrizione con Whisper**: supporto a `whisper-large-v3` e `whisper-large-v3-turbo`.
 - **Correzione automatica**: punteggiatura, grammatica ed errori di trascrizione corretti da LLM.
 - **Funziona ovunque**: WhatsApp, Chrome, Note, email e qualsiasi app con input testuale.
@@ -18,7 +19,7 @@ KeyVoice e' una tastiera personalizzata (IME) per Android che trasforma la voce 
 
 ## Requisiti
 
-- Android 8.0+ (API 26+)
+- Android 13+ (API 33+)
 - Connessione Internet
 - Chiave API Groq
 
@@ -51,18 +52,21 @@ KeyVoice e' una tastiera personalizzata (IME) per Android che trasforma la voce 
 ### Primo avvio
 
 1. Apri **KeyVoice** dal launcher.
-2. Attiva KeyVoice nelle impostazioni tastiera di sistema.
+2. Attiva KeyVoice nelle impostazioni accessibilita di sistema.
 3. Inserisci la API Key Groq nella dashboard.
 4. Usa **Verifica API Key** per controllare che la chiave sia valida.
 
 ## Utilizzo
 
 1. Apri qualsiasi app con un campo di testo.
-2. Seleziona KeyVoice come tastiera.
-3. Tocca il microfono per iniziare a registrare.
-4. Tocca di nuovo il microfono per fermare la registrazione.
-5. Attendi trascrizione e raffinamento.
-6. Il testo finale viene inserito automaticamente nel campo attivo.
+2. Richiama la scorciatoia accessibilita KeyVoice.
+3. Detta mentre il pannello flottante e' visibile.
+4. Tocca il pannello o richiama di nuovo la scorciatoia per fermare la registrazione.
+5. Attendi trascrizione, raffinamento e inserimento automatico nel campo attivo.
+
+### Tastiera secondaria
+
+Se preferisci usare KeyVoice come IME, abilitala nelle impostazioni tastiera di sistema e selezionala da un campo di testo. L'avvio automatico della registrazione e' disattivato di default per non competere con la modalita accessibilita.
 
 ### Pulsanti della tastiera
 
@@ -86,6 +90,7 @@ KeyVoice e' una tastiera personalizzata (IME) per Android che trasforma la voce 
 | Feedback aptico | Vibrazione al tocco del microfono | Abilitato |
 | Prompt di sistema | Istruzioni per la correzione LLM | Prompt KeyVoice |
 | Vocabolario | Termini personalizzati per Whisper | Vuoto |
+| Apprendimento automatico | Aggiunge termini al vocabolario solo dalle correzioni di testo appena dettato con KeyVoice | Disattivato |
 
 ## Dettagli tecnici
 

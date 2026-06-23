@@ -11,6 +11,7 @@
 # Gson
 -keepattributes SerializedName
 -keep class com.google.gson.** { *; }
+-keep class com.keyvoice.app.update.** { *; }
 
 # Coroutines
 -keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
