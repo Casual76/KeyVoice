@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.12",
-      "releaseDate": "2026-06-23",
-      "changelog": "Updater in-app Pampa Store, nuova card aggiornamenti, overlay accessibilita animato e maggiore affidabilita della scorciatoia KeyVoice.",
-      "releaseTag": "stable-keyvoice-v1.2.12",
-      "apkAsset": "keyvoice-1.2.12.apk",
+      "version": "1.2.13",
+      "releaseDate": "2026-08-15",
+      "changelog": "Corretto GPT-OSS 20B con l'identificativo Groq ufficiale, aggiunta la migrazione automatica dai modelli Llama dismessi e introdotto il catalogo dinamico dei modelli disponibili per trascrizione e correzione.",
+      "releaseTag": "stable-keyvoice-v1.2.13",
+      "apkAsset": "keyvoice-1.2.13.apk",
       "exeAsset": "",
-      "sizeBytes": 3342671
+      "sizeBytes": 3354842
     },
     "beta": {
-      "version": "1.2.12",
-      "releaseDate": "2026-06-23",
-      "changelog": "Updater in-app Pampa Store, nuova card aggiornamenti, overlay accessibilita animato e maggiore affidabilita della scorciatoia KeyVoice.",
-      "releaseTag": "stable-keyvoice-v1.2.12",
-      "apkAsset": "keyvoice-1.2.12.apk",
+      "version": "1.2.13",
+      "releaseDate": "2026-08-15",
+      "changelog": "Corretto GPT-OSS 20B con l'identificativo Groq ufficiale, aggiunta la migrazione automatica dai modelli Llama dismessi e introdotto il catalogo dinamico dei modelli disponibili per trascrizione e correzione.",
+      "releaseTag": "stable-keyvoice-v1.2.13",
+      "apkAsset": "keyvoice-1.2.13.apk",
       "exeAsset": "",
-      "sizeBytes": 3342671
+      "sizeBytes": 3354842
     },
     "history": [
+      {
+        "version": "1.2.12",
+        "releaseDate": "2026-06-23",
+        "changelog": "Updater in-app Pampa Store, nuova card aggiornamenti, overlay accessibilita animato e maggiore affidabilita della scorciatoia KeyVoice.",
+        "releaseTag": "stable-keyvoice-v1.2.12",
+        "apkAsset": "keyvoice-1.2.12.apk",
+        "exeAsset": "",
+        "sizeBytes": 3342671
+      },
       {
         "version": "1.2.11",
         "releaseDate": "2026-06-03",
