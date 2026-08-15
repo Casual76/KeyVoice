@@ -37,11 +37,20 @@ class ApiKeyValidatorRepository {
     }
 
     suspend fun validate(apiKey: String): Result<Unit> {
+        return fetchModelCatalog(apiKey).map { Unit }
+    }
+
+    suspend fun fetchModelCatalog(apiKey: String): Result<GroqModelCatalog> {
         return try {
             val response = apiService.listModels("Bearer $apiKey")
             if (response.isSuccessful) {
-                response.body()?.close()
-                Result.success(Unit)
+                val models = response.body()?.data.orEmpty()
+                val catalog = GroqModelCatalog.from(models)
+                if (catalog.transcriptionModels.isEmpty() || catalog.llmModels.isEmpty()) {
+                    Result.failure(ApiException("Groq non ha restituito modelli utilizzabili", -3))
+                } else {
+                    Result.success(catalog)
+                }
             } else {
                 Result.failure(ApiErrorMapper.fromResponse(response.code(), response.errorBody()))
             }

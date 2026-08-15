@@ -44,7 +44,7 @@ interface GroqApiService {
     @GET("models")
     suspend fun listModels(
         @Header("Authorization") authorization: String
-    ): Response<ResponseBody>
+    ): Response<GroqModelsResponse>
 }
 
 // ── Data classes for Chat Completions ──
@@ -77,4 +77,16 @@ data class ApiError(
     val message: String?,
     val type: String?,
     val code: String?
+)
+
+data class GroqModelsResponse(
+    val data: List<GroqModel>?
+)
+
+data class GroqModel(
+    val id: String?,
+    val active: Boolean? = true,
+    val owned_by: String? = null,
+    val context_window: Int? = null,
+    val max_completion_tokens: Int? = null
 )

@@ -42,6 +42,9 @@
     <string name="settings_api_key_valid">API Key valida</string>
     <string name="settings_language">Lingua di trascrizione</string>
     <string name="settings_llm_model">Modello LLM (Fase 2)</string>
+    <string name="settings_models_loading">Aggiornamento modelli Groq...</string>
+    <string name="settings_models_live">Elenco aggiornato da Groq</string>
+    <string name="settings_models_fallback">Elenco locale: impossibile aggiornare da Groq</string>
     <string name="settings_phase2_enabled">Abilita correzione testo (Fase 2)</string>
     <string name="settings_phase2_description">Usa un modello LLM per correggere punteggiatura, grammatica ed errori. Se disattivata, resta attiva la punteggiatura parlata di base.</string>
     <string name="settings_prompt_preset">Preset prompt</string>

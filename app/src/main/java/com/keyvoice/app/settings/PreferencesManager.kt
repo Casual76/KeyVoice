@@ -47,7 +47,7 @@ class PreferencesManager private constructor(private val context: Context) {
         // Defaults
         const val DEFAULT_LANGUAGE = "it"
         const val DEFAULT_WHISPER_MODEL = "whisper-large-v3"
-        const val DEFAULT_LLM_MODEL = "gpt-oss-20b"
+        const val DEFAULT_LLM_MODEL = "openai/gpt-oss-20b"
         const val DEFAULT_PHASE2_ENABLED = true
         const val DEFAULT_MAX_DURATION = 180 // 3 minutes in seconds
         const val DEFAULT_HAPTIC_FEEDBACK = true
@@ -67,9 +67,22 @@ class PreferencesManager private constructor(private val context: Context) {
         const val LANGUAGE_AUTO = "auto"
 
         // Model options
-        const val MODEL_GPT_OSS_20B = "gpt-oss-20b"
+        const val MODEL_GPT_OSS_20B = "openai/gpt-oss-20b"
+        const val MODEL_GPT_OSS_120B = "openai/gpt-oss-120b"
+        const val MODEL_QWEN_3_6_27B = "qwen/qwen3.6-27b"
         const val MODEL_LLAMA_70B = "llama-3.3-70b-versatile"
-        const val MODEL_LLAMA_8B = "llama3-8b-8192"
+        const val MODEL_LLAMA_8B = "llama-3.1-8b-instant"
+
+        internal fun migrateLlmModel(model: String?): String {
+            return when (model?.trim()) {
+                null, "" -> DEFAULT_LLM_MODEL
+                "gpt-oss-20b" -> MODEL_GPT_OSS_20B
+                "gpt-oss-120b" -> MODEL_GPT_OSS_120B
+                "llama3-8b-8192", "llama-3.1-8b-instant" -> MODEL_GPT_OSS_20B
+                MODEL_LLAMA_70B -> MODEL_GPT_OSS_120B
+                else -> model.trim()
+            }
+        }
 
         @Volatile
         private var instance: PreferencesManager? = null
@@ -153,7 +166,14 @@ class PreferencesManager private constructor(private val context: Context) {
 
     /** LLM model identifier for Phase 2 refinement */
     var llmModel: String
-        get() = prefs.getString(KEY_LLM_MODEL, DEFAULT_LLM_MODEL) ?: DEFAULT_LLM_MODEL
+        get() {
+            val stored = prefs.getString(KEY_LLM_MODEL, DEFAULT_LLM_MODEL)
+            val migrated = migrateLlmModel(stored)
+            if (stored != migrated) {
+                prefs.edit().putString(KEY_LLM_MODEL, migrated).apply()
+            }
+            return migrated
+        }
         set(value) = prefs.edit().putString(KEY_LLM_MODEL, value).apply()
 
     /** Whether Phase 2 (LLM text refinement) is enabled */

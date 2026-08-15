@@ -23,6 +23,7 @@ import com.google.android.material.slider.Slider
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.keyvoice.app.api.ApiKeyValidatorRepository
+import com.keyvoice.app.api.GroqModelCatalog
 import com.keyvoice.app.settings.PreferencesManager
 import com.keyvoice.app.settings.PromptPreset
 import com.keyvoice.app.update.AppUpdateInstallState
@@ -47,6 +48,7 @@ class MainSetupActivity : AppCompatActivity() {
     private var updateInstallState: AppUpdateInstallState = AppUpdateInstallState.Idle
     private var updateCheckJob: Job? = null
     private var updateInstallJob: Job? = null
+    private var modelRefreshJob: Job? = null
 
     // UI Elements
     private lateinit var setupWizardContainer: View
@@ -71,6 +73,7 @@ class MainSetupActivity : AppCompatActivity() {
     private lateinit var tvApiLink: TextView
     private lateinit var btnTestApiKey: MaterialButton
     private lateinit var dropdownLanguage: AutoCompleteTextView
+    private lateinit var layoutWhisperModel: TextInputLayout
     private lateinit var dropdownWhisperModel: AutoCompleteTextView
     private lateinit var etVocabularyInput: TextInputEditText
     private lateinit var btnAddVocabulary: MaterialButton
@@ -82,6 +85,7 @@ class MainSetupActivity : AppCompatActivity() {
     private lateinit var switchPhase2: MaterialSwitch
     private lateinit var containerPhase2Settings: View
     private lateinit var dropdownPromptPreset: AutoCompleteTextView
+    private lateinit var layoutLlmModel: TextInputLayout
     private lateinit var dropdownLlmModel: AutoCompleteTextView
     private lateinit var btnResetPrompt: MaterialButton
     private lateinit var containerPromptHeader: View
@@ -106,16 +110,10 @@ class MainSetupActivity : AppCompatActivity() {
         PreferencesManager.LANGUAGE_AUTO
     )
 
-    private val whisperModelOptions = listOf(
-        "whisper-large-v3",
-        "whisper-large-v3-turbo"
-    )
-
-    private val llmModelOptions = listOf(
-        PreferencesManager.MODEL_GPT_OSS_20B,
-        PreferencesManager.MODEL_LLAMA_70B,
-        PreferencesManager.MODEL_LLAMA_8B
-    )
+    private val whisperModelOptions = GroqModelCatalog.FALLBACK.transcriptionModels.toMutableList()
+    private val llmModelOptions = GroqModelCatalog.FALLBACK.llmModels.toMutableList()
+    private lateinit var whisperModelAdapter: ArrayAdapter<String>
+    private lateinit var llmModelAdapter: ArrayAdapter<String>
 
     private val promptPresetOptions = PromptPreset.entries.map { it.displayName }
 
@@ -133,6 +131,7 @@ class MainSetupActivity : AppCompatActivity() {
         super.onResume()
         loadCurrentSettings()
         updateSetupStatus()
+        refreshGroqModels()
         checkForUpdates(manual = intent?.getBooleanExtra(EXTRA_SHOW_UPDATE_CARD, false) == true)
         intent?.removeExtra(EXTRA_SHOW_UPDATE_CARD)
     }
@@ -160,6 +159,7 @@ class MainSetupActivity : AppCompatActivity() {
         tvApiLink = findViewById(R.id.tv_api_link)
         btnTestApiKey = findViewById(R.id.btn_test_api_key)
         dropdownLanguage = findViewById(R.id.dropdown_language)
+        layoutWhisperModel = findViewById(R.id.layout_whisper_model)
         dropdownWhisperModel = findViewById(R.id.dropdown_whisper_model)
         etVocabularyInput = findViewById(R.id.et_vocabulary_input)
         btnAddVocabulary = findViewById(R.id.btn_add_vocabulary)
@@ -171,6 +171,7 @@ class MainSetupActivity : AppCompatActivity() {
         switchPhase2 = findViewById(R.id.switch_phase2)
         containerPhase2Settings = findViewById(R.id.container_phase2_settings)
         dropdownPromptPreset = findViewById(R.id.dropdown_prompt_preset)
+        layoutLlmModel = findViewById(R.id.layout_llm_model)
         dropdownLlmModel = findViewById(R.id.dropdown_model)
         btnResetPrompt = findViewById(R.id.tv_reset_prompt)
         containerPromptHeader = findViewById(R.id.container_prompt_header)
@@ -190,12 +191,18 @@ class MainSetupActivity : AppCompatActivity() {
         dropdownLanguage.setAdapter(
             ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, languageOptions)
         )
-        dropdownWhisperModel.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, whisperModelOptions)
+        whisperModelAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            whisperModelOptions
         )
-        dropdownLlmModel.setAdapter(
-            ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, llmModelOptions)
+        dropdownWhisperModel.setAdapter(whisperModelAdapter)
+        llmModelAdapter = ArrayAdapter(
+            this,
+            android.R.layout.simple_dropdown_item_1line,
+            llmModelOptions
         )
+        dropdownLlmModel.setAdapter(llmModelAdapter)
         dropdownPromptPreset.setAdapter(
             ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, promptPresetOptions)
         )
@@ -216,8 +223,7 @@ class MainSetupActivity : AppCompatActivity() {
         dropdownLanguage.setText(languageOptions[langIdx], false)
 
         // Whisper Model
-        val wModelIdx = whisperModelOptions.indexOf(prefs.whisperModel).coerceAtLeast(0)
-        dropdownWhisperModel.setText(whisperModelOptions[wModelIdx], false)
+        dropdownWhisperModel.setText(prefs.whisperModel, false)
 
         // Vocabulary
         manualVocabularyTerms.clear()
@@ -233,8 +239,7 @@ class MainSetupActivity : AppCompatActivity() {
         dropdownPromptPreset.setText(prefs.promptPreset.displayName, false)
         updatePromptEditorVisibility()
 
-        val lModelIdx = llmModelOptions.indexOf(prefs.llmModel).coerceAtLeast(0)
-        dropdownLlmModel.setText(llmModelOptions[lModelIdx], false)
+        dropdownLlmModel.setText(prefs.llmModel, false)
 
         etSystemPrompt.setText(prefs.systemPrompt)
 
@@ -454,14 +459,16 @@ class MainSetupActivity : AppCompatActivity() {
         val langIdx = languageOptions.indexOf(dropdownLanguage.text.toString())
         if (langIdx >= 0) prefs.language = languageCodes[langIdx]
 
-        prefs.whisperModel = dropdownWhisperModel.text.toString()
+        prefs.whisperModel = dropdownWhisperModel.text.toString().trim()
+            .ifBlank { PreferencesManager.DEFAULT_WHISPER_MODEL }
         prefs.manualVocabulary = manualVocabularyTerms.joinToString(", ")
         prefs.autoLearningEnabled = switchAutoLearning.isChecked
 
         prefs.isPhase2Enabled = switchPhase2.isChecked
         val selectedPromptPreset = PromptPreset.fromDisplayName(dropdownPromptPreset.text.toString())
         prefs.promptPreset = selectedPromptPreset
-        prefs.llmModel = dropdownLlmModel.text.toString()
+        prefs.llmModel = dropdownLlmModel.text.toString().trim()
+            .ifBlank { PreferencesManager.DEFAULT_LLM_MODEL }
         if (selectedPromptPreset == PromptPreset.CUSTOM) {
             prefs.systemPrompt = etSystemPrompt.text?.toString() ?: ""
         } else if (selectedPromptPreset == PromptPreset.CLEAN) {
@@ -477,6 +484,57 @@ class MainSetupActivity : AppCompatActivity() {
 
         Toast.makeText(this, getString(R.string.settings_saved), Toast.LENGTH_SHORT).show()
         updateSetupStatus()
+        if (apiKey.isNotBlank()) refreshGroqModels()
+    }
+
+    private fun refreshGroqModels() {
+        val apiKey = prefs.apiKey
+        if (apiKey.isBlank() || modelRefreshJob?.isActive == true) return
+
+        setModelCatalogStatus(R.string.settings_models_loading)
+        modelRefreshJob = lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                apiKeyValidator.fetchModelCatalog(apiKey)
+            }
+            result.fold(
+                onSuccess = ::applyModelCatalog,
+                onFailure = { setModelCatalogStatus(R.string.settings_models_fallback) }
+            )
+        }
+    }
+
+    private fun applyModelCatalog(catalog: GroqModelCatalog) {
+        val selectedWhisper = dropdownWhisperModel.text?.toString().orEmpty()
+        val selectedLlm = dropdownLlmModel.text?.toString().orEmpty()
+
+        whisperModelOptions.clear()
+        whisperModelOptions.addAll(catalog.transcriptionModels)
+        whisperModelAdapter.notifyDataSetChanged()
+
+        llmModelOptions.clear()
+        llmModelOptions.addAll(catalog.llmModels)
+        llmModelAdapter.notifyDataSetChanged()
+
+        val resolvedWhisper = resolveAvailableModel(selectedWhisper, whisperModelOptions)
+        val resolvedLlm = resolveAvailableModel(selectedLlm, llmModelOptions)
+        dropdownWhisperModel.setText(resolvedWhisper, false)
+        dropdownLlmModel.setText(resolvedLlm, false)
+
+        if (prefs.whisperModel !in whisperModelOptions) prefs.whisperModel = resolvedWhisper
+        if (prefs.llmModel !in llmModelOptions) prefs.llmModel = resolvedLlm
+        setModelCatalogStatus(R.string.settings_models_live)
+    }
+
+    private fun resolveAvailableModel(selectedModel: String, availableModels: List<String>): String {
+        return selectedModel.trim().takeIf(availableModels::contains)
+            ?: availableModels.firstOrNull()
+            ?: selectedModel.trim()
+    }
+
+    private fun setModelCatalogStatus(messageRes: Int) {
+        val message = getString(messageRes)
+        layoutWhisperModel.helperText = message
+        layoutLlmModel.helperText = message
     }
 
     private fun testApiKey() {
@@ -489,23 +547,26 @@ class MainSetupActivity : AppCompatActivity() {
 
         btnTestApiKey.isEnabled = false
         btnTestApiKey.text = getString(R.string.settings_api_key_testing)
+        modelRefreshJob?.cancel()
+        setModelCatalogStatus(R.string.settings_models_loading)
 
         lifecycleScope.launch {
             val result = withContext(Dispatchers.IO) {
-                apiKeyValidator.validate(apiKey)
+                apiKeyValidator.fetchModelCatalog(apiKey)
             }
 
             btnTestApiKey.isEnabled = true
             btnTestApiKey.text = getString(R.string.settings_api_key_test)
 
             result.fold(
-                onSuccess = {
+                onSuccess = { catalog ->
                     if (enteredApiKey.isNotBlank()) {
                         prefs.apiKey = enteredApiKey
                         etApiKey.setText("")
                         etApiKey.hint = null
                         layoutApiKey.helperText = getString(R.string.settings_api_key_saved_hint)
                     }
+                    applyModelCatalog(catalog)
                     Toast.makeText(
                         this@MainSetupActivity,
                         getString(R.string.settings_api_key_valid),
@@ -514,6 +575,7 @@ class MainSetupActivity : AppCompatActivity() {
                     updateSetupStatus()
                 },
                 onFailure = { error ->
+                    setModelCatalogStatus(R.string.settings_models_fallback)
                     Toast.makeText(
                         this@MainSetupActivity,
                         error.message ?: getString(R.string.error_api_generic, 0),

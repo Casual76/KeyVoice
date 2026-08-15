@@ -15,7 +15,8 @@ KeyVoice trasforma la voce in testo usando le API Groq. La modalita principale u
 - **Indicatore audio**: visualizzatore del livello audio in tempo reale durante la registrazione.
 - **Annulla rapido**: pulsante per rimuovere l'ultimo testo inserito.
 - **Cambio tastiera**: pulsante dedicato per tornare rapidamente a un'altra tastiera.
-- **Verifica API Key**: controllo rapido della chiave Groq dalla dashboard.
+- **Verifica API Key**: controllo rapido della chiave Groq dalla dashboard e aggiornamento del catalogo modelli.
+- **Catalogo modelli dinamico**: i modelli attivi vengono recuperati direttamente dall'API Groq e separati tra trascrizione e raffinamento.
 
 ## Requisiti
 
@@ -84,7 +85,7 @@ Se preferisci usare KeyVoice come IME, abilitala nelle impostazioni tastiera di 
 | API Key | Chiave API Groq salvata in modo sicuro | Vuota |
 | Lingua | Italiano, English, Auto-detect | Italiano |
 | Modello Whisper | Modello usato per la trascrizione | `whisper-large-v3` |
-| Modello LLM | Modello usato per il raffinamento | `gpt-oss-20b` |
+| Modello LLM | Modello usato per il raffinamento | `openai/gpt-oss-20b` |
 | Fase 2 | Abilita/disabilita correzione LLM | Abilitata |
 | Durata max | Durata massima registrazione, 30s-10min | 3 minuti |
 | Feedback aptico | Vibrazione al tocco del microfono | Abilitato |

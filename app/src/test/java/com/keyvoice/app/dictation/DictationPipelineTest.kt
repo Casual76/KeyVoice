@@ -97,7 +97,7 @@ class DictationPipelineTest {
             whisperModel = "whisper-large-v3",
             language = "it",
             languageFullName = "italiano",
-            llmModel = "gpt-oss-20b",
+            llmModel = "openai/gpt-oss-20b",
             phase2Enabled = phase2Enabled,
             systemPrompt = "Clean {LINGUA_CONFIGURATA}",
             vocabulary = "KeyVoice",
