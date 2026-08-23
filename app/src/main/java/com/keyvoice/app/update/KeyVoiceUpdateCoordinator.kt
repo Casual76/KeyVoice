@@ -15,11 +15,21 @@ import com.keyvoice.app.BuildConfig
 import com.keyvoice.app.MainSetupActivity
 import com.keyvoice.app.R
 import com.keyvoice.app.settings.PreferencesManager
+import dev.antigravity.fluidengine.foundation.AppUpdater
+import dev.antigravity.fluidengine.foundation.AvailableAppUpdate
+import dev.antigravity.fluidengine.foundation.UpdateChannel
 
+/**
+ * Le decisioni su *quando* proporre un aggiornamento, che restano di KeyVoice.
+ *
+ * Scaricare e installare le fa l'engine ([updater]); qui vive quello che l'engine non puo' sapere:
+ * ogni quanto controllare senza dare fastidio, quale versione l'utente ha detto di ignorare, e come
+ * si scrive la notifica.
+ */
 class KeyVoiceUpdateCoordinator(
     private val context: Context,
     private val prefs: PreferencesManager = PreferencesManager.getInstance(context),
-    private val repository: AppUpdateRepository = PampaUpdateRepository(context)
+    private val updater: AppUpdater = keyVoiceUpdater(context)
 ) {
     suspend fun checkForUpdate(
         manual: Boolean = false,
@@ -34,8 +44,9 @@ class KeyVoiceUpdateCoordinator(
         }
 
         val ignoredVersion = if (manual) "" else prefs.ignoredStableUpdateVersion
-        return repository.checkForStableUpdate(
+        return updater.check(
             currentVersionName = BuildConfig.VERSION_NAME,
+            channel = UpdateChannel.STABLE,
             ignoredVersion = ignoredVersion
         ).onSuccess { update ->
             if (update != null && notifyIfAvailable) {
@@ -48,7 +59,7 @@ class KeyVoiceUpdateCoordinator(
         prefs.ignoredStableUpdateVersion = version
     }
 
-    fun install(update: AvailableAppUpdate) = repository.install(update)
+    fun install(update: AvailableAppUpdate) = updater.install(update)
 
     private fun showUpdateNotificationOnce(update: AvailableAppUpdate) {
         if (prefs.notifiedStableUpdateVersion == update.version) return

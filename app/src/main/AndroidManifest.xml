@@ -55,10 +55,6 @@
                 android:resource="@xml/keyvoice_accessibility_service" />
         </service>
 
-        <receiver
-            android:name=".update.KeyVoiceUpdateInstallResultReceiver"
-            android:exported="false" />
-
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

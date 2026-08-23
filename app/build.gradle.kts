@@ -61,6 +61,9 @@ android {
 }
 
 dependencies {
+    // Fluid Engine: aggiornamento in-app (porta con se' engine-net ed engine-foundation)
+    implementation(project(":engine-update"))
+
     // AndroidX
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

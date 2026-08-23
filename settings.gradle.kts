@@ -22,3 +22,17 @@ dependencyResolutionManagement {
 
 rootProject.name = "KeyVoice"
 include(":app")
+
+// --- fluid-engine (inizio) ---
+val engineDir = file("engine")
+if (engineDir.exists()) {
+  listOf(
+  "engine-foundation",
+  "engine-net",
+  "engine-update"
+  ).forEach { name ->
+    include(":$name")
+    project(":$name").projectDir = engineDir.resolve(name)
+  }
+}
+// --- fluid-engine (fine) ---

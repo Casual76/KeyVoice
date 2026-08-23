@@ -26,9 +26,9 @@ import com.keyvoice.app.api.ApiKeyValidatorRepository
 import com.keyvoice.app.api.GroqModelCatalog
 import com.keyvoice.app.settings.PreferencesManager
 import com.keyvoice.app.settings.PromptPreset
-import com.keyvoice.app.update.AppUpdateInstallState
-import com.keyvoice.app.update.AvailableAppUpdate
 import com.keyvoice.app.update.KeyVoiceUpdateCoordinator
+import dev.antigravity.fluidengine.foundation.AppUpdateInstallState
+import dev.antigravity.fluidengine.foundation.AvailableAppUpdate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -45,7 +45,7 @@ class MainSetupActivity : AppCompatActivity() {
     private val apiKeyValidator = ApiKeyValidatorRepository()
     private lateinit var updateCoordinator: KeyVoiceUpdateCoordinator
     private var availableUpdate: AvailableAppUpdate? = null
-    private var updateInstallState: AppUpdateInstallState = AppUpdateInstallState.Idle
+    private var updateInstallState: AppUpdateInstallState? = null
     private var updateCheckJob: Job? = null
     private var updateInstallJob: Job? = null
     private var modelRefreshJob: Job? = null
@@ -282,7 +282,7 @@ class MainSetupActivity : AppCompatActivity() {
 
         btnLaterUpdate.setOnClickListener {
             availableUpdate = null
-            updateInstallState = AppUpdateInstallState.Idle
+            updateInstallState = null
             renderUpdateCard()
         }
 
@@ -290,7 +290,7 @@ class MainSetupActivity : AppCompatActivity() {
             val update = availableUpdate ?: return@setOnClickListener
             updateCoordinator.ignoreVersion(update.version)
             availableUpdate = null
-            updateInstallState = AppUpdateInstallState.Idle
+            updateInstallState = null
             renderUpdateCard()
         }
 
@@ -344,7 +344,7 @@ class MainSetupActivity : AppCompatActivity() {
 
         if (manual) {
             availableUpdate = null
-            updateInstallState = AppUpdateInstallState.Idle
+            updateInstallState = null
         }
         tvUpdateStatus.text = getString(R.string.update_status_checking)
         btnCheckUpdate.isEnabled = false
@@ -359,7 +359,7 @@ class MainSetupActivity : AppCompatActivity() {
             result.fold(
                 onSuccess = { update ->
                     availableUpdate = update
-                    updateInstallState = AppUpdateInstallState.Idle
+                    updateInstallState = null
                     renderUpdateCard(noUpdateMessage = manual && update == null)
                 },
                 onFailure = { error ->
@@ -422,7 +422,7 @@ class MainSetupActivity : AppCompatActivity() {
                     is AppUpdateInstallState.Installing -> installState.message
                     is AppUpdateInstallState.Installed -> getString(R.string.update_install_installed)
                     is AppUpdateInstallState.Error -> installState.message
-                    AppUpdateInstallState.Idle -> getString(R.string.update_status_available, update.version)
+                    null -> getString(R.string.update_status_available, update.version)
                 }
 
                 tvUpdateChangelog.text = update.changelog.ifBlank {
@@ -758,12 +758,15 @@ class MainSetupActivity : AppCompatActivity() {
         }
     }
 
-    private fun AppUpdateInstallState.isBusy(): Boolean = when (this) {
+    // Nullable perche' l'engine emette soltanto stati di un'installazione in corso: "nessuna
+    // installazione in corso" e' l'assenza di uno stato, non uno stato in piu' da ricordarsi di
+    // gestire in ogni `when`.
+    private fun AppUpdateInstallState?.isBusy(): Boolean = when (this) {
         is AppUpdateInstallState.Downloading,
         is AppUpdateInstallState.Verifying,
         is AppUpdateInstallState.Installing,
         is AppUpdateInstallState.AwaitingUserAction -> true
-        AppUpdateInstallState.Idle,
+        null,
         is AppUpdateInstallState.Installed,
         is AppUpdateInstallState.Error -> false
     }
