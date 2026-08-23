@@ -15,24 +15,33 @@
       "ref": ""
     },
     "stable": {
-      "version": "1.2.13",
-      "releaseDate": "2026-08-15",
-      "changelog": "Corretto GPT-OSS 20B con l'identificativo Groq ufficiale, aggiunta la migrazione automatica dai modelli Llama dismessi e introdotto il catalogo dinamico dei modelli disponibili per trascrizione e correzione.",
-      "releaseTag": "stable-keyvoice-v1.2.13",
-      "apkAsset": "keyvoice-1.2.13.apk",
+      "version": "1.2.14",
+      "releaseDate": "2026-08-23",
+      "changelog": "L'aggiornamento in-app ora usa le fondamenta condivise con le altre app invece di una copia sua: stesse verifiche prima di installare un APK, stessi messaggi quando qualcosa non va. In piu' verifica che il file scaricato pesi quanto dovrebbe, cosi' un download interrotto non arriva piu' all'installer come mezzo APK. E se e' Play Protect a bloccare l'installazione adesso lo dice, invece di riportare solo 'annullata' a chi non ha annullato niente. Altrove non cambia nulla.",
+      "releaseTag": "stable-keyvoice-v1.2.14",
+      "apkAsset": "keyvoice-1.2.14.apk",
       "exeAsset": "",
-      "sizeBytes": 3354842
+      "sizeBytes": 3418766
     },
     "beta": {
-      "version": "1.2.13",
-      "releaseDate": "2026-08-15",
-      "changelog": "Corretto GPT-OSS 20B con l'identificativo Groq ufficiale, aggiunta la migrazione automatica dai modelli Llama dismessi e introdotto il catalogo dinamico dei modelli disponibili per trascrizione e correzione.",
-      "releaseTag": "stable-keyvoice-v1.2.13",
-      "apkAsset": "keyvoice-1.2.13.apk",
+      "version": "1.2.14",
+      "releaseDate": "2026-08-23",
+      "changelog": "L'aggiornamento in-app ora usa le fondamenta condivise con le altre app invece di una copia sua: stesse verifiche prima di installare un APK, stessi messaggi quando qualcosa non va. In piu' verifica che il file scaricato pesi quanto dovrebbe, cosi' un download interrotto non arriva piu' all'installer come mezzo APK. E se e' Play Protect a bloccare l'installazione adesso lo dice, invece di riportare solo 'annullata' a chi non ha annullato niente. Altrove non cambia nulla.",
+      "releaseTag": "stable-keyvoice-v1.2.14",
+      "apkAsset": "keyvoice-1.2.14.apk",
       "exeAsset": "",
-      "sizeBytes": 3354842
+      "sizeBytes": 3418766
     },
     "history": [
+      {
+        "version": "1.2.13",
+        "releaseDate": "2026-08-15",
+        "changelog": "Corretto GPT-OSS 20B con l'identificativo Groq ufficiale, aggiunta la migrazione automatica dai modelli Llama dismessi e introdotto il catalogo dinamico dei modelli disponibili per trascrizione e correzione.",
+        "releaseTag": "stable-keyvoice-v1.2.13",
+        "apkAsset": "keyvoice-1.2.13.apk",
+        "exeAsset": "",
+        "sizeBytes": 3354842
+      },
       {
         "version": "1.2.12",
         "releaseDate": "2026-06-23",
