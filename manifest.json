@@ -12,27 +12,34 @@
       "repoOwner": "Casual76",
       "repoName": "KeyVoice",
       "manifestPath": "manifest.json",
-      "ref": ""
+      "ref": "main"
     },
     "stable": {
-      "version": "1.2.14",
-      "releaseDate": "2026-08-23",
-      "changelog": "L'aggiornamento in-app ora usa le fondamenta condivise con le altre app invece di una copia sua: stesse verifiche prima di installare un APK, stessi messaggi quando qualcosa non va. In piu' verifica che il file scaricato pesi quanto dovrebbe, cosi' un download interrotto non arriva piu' all'installer come mezzo APK. E se e' Play Protect a bloccare l'installazione adesso lo dice, invece di riportare solo 'annullata' a chi non ha annullato niente. Altrove non cambia nulla.",
-      "releaseTag": "stable-keyvoice-v1.2.14",
-      "apkAsset": "keyvoice-1.2.14.apk",
-      "exeAsset": "",
-      "sizeBytes": 3418766
+      "version": "1.2.15",
+      "releaseDate": "2026-09-27",
+      "changelog": "KeyVoice riprogettata con Fluid Engine 2.7.1 e una nuova interfaccia in vetro.\nImpostazioni più chiare: scelta dei modelli, vocabolario esteso e modifiche mantenute in bozza fino a Salva.\nTastiera e pannello di dettatura rifiniti, con miglioramenti a leggibilità e accessibilità.\nCorretti errori nella gestione dei modelli Groq e rafforzata la protezione della chiave API e della cronologia.",
+      "releaseTag": "stable-keyvoice-v1.2.15",
+      "apkAsset": "keyvoice-1.2.15.apk",
+      "sizeBytes": 6682870
     },
     "beta": {
-      "version": "1.2.14",
-      "releaseDate": "2026-08-23",
-      "changelog": "L'aggiornamento in-app ora usa le fondamenta condivise con le altre app invece di una copia sua: stesse verifiche prima di installare un APK, stessi messaggi quando qualcosa non va. In piu' verifica che il file scaricato pesi quanto dovrebbe, cosi' un download interrotto non arriva piu' all'installer come mezzo APK. E se e' Play Protect a bloccare l'installazione adesso lo dice, invece di riportare solo 'annullata' a chi non ha annullato niente. Altrove non cambia nulla.",
-      "releaseTag": "stable-keyvoice-v1.2.14",
-      "apkAsset": "keyvoice-1.2.14.apk",
-      "exeAsset": "",
-      "sizeBytes": 3418766
+      "version": "1.2.15",
+      "releaseDate": "2026-09-27",
+      "changelog": "KeyVoice riprogettata con Fluid Engine 2.7.1 e una nuova interfaccia in vetro.\nImpostazioni più chiare: scelta dei modelli, vocabolario esteso e modifiche mantenute in bozza fino a Salva.\nTastiera e pannello di dettatura rifiniti, con miglioramenti a leggibilità e accessibilità.\nCorretti errori nella gestione dei modelli Groq e rafforzata la protezione della chiave API e della cronologia.",
+      "releaseTag": "stable-keyvoice-v1.2.15",
+      "apkAsset": "keyvoice-1.2.15.apk",
+      "sizeBytes": 6682870
     },
     "history": [
+      {
+        "version": "1.2.14",
+        "releaseDate": "2026-08-23",
+        "changelog": "L'aggiornamento in-app ora usa le fondamenta condivise con le altre app invece di una copia sua: stesse verifiche prima di installare un APK, stessi messaggi quando qualcosa non va. In piu' verifica che il file scaricato pesi quanto dovrebbe, cosi' un download interrotto non arriva piu' all'installer come mezzo APK. E se e' Play Protect a bloccare l'installazione adesso lo dice, invece di riportare solo 'annullata' a chi non ha annullato niente. Altrove non cambia nulla.",
+        "releaseTag": "stable-keyvoice-v1.2.14",
+        "apkAsset": "keyvoice-1.2.14.apk",
+        "exeAsset": "",
+        "sizeBytes": 3418766
+      },
       {
         "version": "1.2.13",
         "releaseDate": "2026-08-15",
