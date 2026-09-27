@@ -6,6 +6,25 @@ data class GroqModelCatalog(
     val transcriptionModels: List<String>,
     val llmModels: List<String>
 ) {
+    internal fun resolveSelection(
+        draftWhisper: String,
+        draftLlm: String,
+        savedWhisper: String,
+        savedLlm: String,
+        catalogBelongsToSavedKey: Boolean,
+    ): GroqModelSelection = GroqModelSelection(
+        draftWhisper = draftWhisper.takeIf { it in transcriptionModels }
+            ?: transcriptionModels.firstOrNull() ?: draftWhisper,
+        draftLlm = draftLlm.takeIf { it in llmModels }
+            ?: llmModels.firstOrNull() ?: draftLlm,
+        savedWhisperReplacement = if (catalogBelongsToSavedKey && savedWhisper !in transcriptionModels) {
+            transcriptionModels.firstOrNull()
+        } else null,
+        savedLlmReplacement = if (catalogBelongsToSavedKey && savedLlm !in llmModels) {
+            llmModels.firstOrNull()
+        } else null,
+    )
+
     companion object {
         val FALLBACK = GroqModelCatalog(
             transcriptionModels = listOf(
@@ -64,3 +83,10 @@ data class GroqModelCatalog(
         }
     }
 }
+
+internal data class GroqModelSelection(
+    val draftWhisper: String,
+    val draftLlm: String,
+    val savedWhisperReplacement: String?,
+    val savedLlmReplacement: String?,
+)

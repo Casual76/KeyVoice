@@ -459,6 +459,7 @@ class KeyVoiceAccessibilityService : AccessibilityService(), SharedPreferences.O
 
         val bubble = KeyVoiceAccessibilityOverlayView(this).apply {
             contentDescription = getString(R.string.accessibility_bubble_content_description)
+            setOnClickListener { handleTrigger() }
             setOnTouchListener(BubbleTouchListener(params))
         }
 
@@ -1263,7 +1264,7 @@ class KeyVoiceAccessibilityService : AccessibilityService(), SharedPreferences.O
                     if (dragging) {
                         saveBubblePosition(params, view)
                     } else {
-                        handleTrigger()
+                        view.performClick()
                     }
                     return true
                 }

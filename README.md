@@ -39,7 +39,7 @@ KeyVoice trasforma la voce in testo usando le API Groq. La modalita principale u
 1. Clona il repository:
 
    ```bash
-   git clone https://github.com/your-username/KeyVoice.git
+   git clone https://github.com/Casual76/KeyVoice.git
    ```
 
 2. Apri il progetto in Android Studio.
@@ -55,7 +55,7 @@ KeyVoice trasforma la voce in testo usando le API Groq. La modalita principale u
 1. Apri **KeyVoice** dal launcher.
 2. Attiva KeyVoice nelle impostazioni accessibilita di sistema.
 3. Inserisci la API Key Groq nella dashboard.
-4. Usa **Verifica API Key** per controllare che la chiave sia valida.
+4. Usa **Verifica API Key** per controllare la chiave, poi premi **Salva** per conservarla.
 
 ## Utilizzo
 
@@ -112,13 +112,16 @@ La durata massima e' configurabile. Il default e' 3 minuti, sotto il limite tipi
 - `MediaRecorder`
 - Retrofit + OkHttp
 - `EncryptedSharedPreferences`
-- Material Design 3 con layout XML
+- Fluid Engine 2.7.1 e Jetpack Compose per dashboard e impostazioni
+- View/XML per la finestra IME e il pannello del servizio accessibilita
 
 ### Architettura
 
 ```text
 com.keyvoice.app/
 |-- MainSetupActivity.kt              Dashboard e impostazioni
+|-- ui/setup/
+|   |-- KeyVoiceSetupScreen.kt         Schermata Fluid Compose
 |-- ime/
 |   |-- VoiceKeyboardService.kt       Servizio IME principale
 |-- ui/

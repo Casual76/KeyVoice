@@ -21,6 +21,13 @@
     <!-- Keyboard -->
     <color name="keyboard_background">#F2F1F6</color>
     <color name="keyboard_bottom_bar">#E8E7ED</color>
+    <color name="keyboard_glass_start">#F4F2FF</color>
+    <color name="keyboard_glass_end">#E8E5FC</color>
+    <color name="keyboard_glass_edge">#B9B3E5</color>
+    <color name="keyboard_panel_start">#FFFFFF</color>
+    <color name="keyboard_panel_end">#F6F4FF</color>
+    <color name="keyboard_bar_start">#EEEAFB</color>
+    <color name="keyboard_bar_end">#E5E0F6</color>
     <color name="accessibility_overlay_stroke">#336C63FF</color>
 
     <!-- Mic Button -->

@@ -1,9 +1,12 @@
 package com.keyvoice.app.ui
 
 import android.content.Context
+import android.content.res.Configuration
+import android.animation.ValueAnimator
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RadialGradient
@@ -44,6 +47,9 @@ class KeyVoiceAccessibilityOverlayView @JvmOverloads constructor(
         strokeWidth = dp(1.2f)
     }
     private val bounds = RectF()
+    private val strokeBounds = RectF()
+    private val shimmerMatrix = Matrix()
+    private var backgroundShader: LinearGradient? = null
     private var visualState = VisualState.IDLE
     private var shimmerOffset = 0f
 
@@ -98,7 +104,45 @@ class KeyVoiceAccessibilityOverlayView @JvmOverloads constructor(
         if (visualState == state) return
         visualState = state
         orbView.setVisualState(state)
+        rebuildShaders()
         invalidate()
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        rebuildShaders()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        rebuildShaders()
+    }
+
+    private fun rebuildShaders() {
+        if (width <= 0 || height <= 0) return
+        val primary = ContextCompat.getColor(context, R.color.primary)
+        val secondary = ContextCompat.getColor(context, R.color.secondary)
+        val surface = ContextCompat.getColor(context, R.color.surface)
+        val accent = when (visualState) {
+            VisualState.RECORDING, VisualState.ERROR -> ContextCompat.getColor(context, R.color.error)
+            VisualState.SUCCESS -> ContextCompat.getColor(context, R.color.success)
+            VisualState.PROCESSING -> secondary
+            else -> primary
+        }
+        val w = width.toFloat()
+        val h = height.toFloat()
+        backgroundShader = LinearGradient(
+            -w * 0.55f, 0f, w * 0.55f, h,
+            intArrayOf(surface, blend(surface, accent, 0.10f), surface),
+            floatArrayOf(0f, 0.5f, 1f),
+            Shader.TileMode.CLAMP,
+        ).also { backgroundPaint.shader = it }
+        strokePaint.shader = LinearGradient(
+            0f, 0f, w, h,
+            blend(accent, Color.WHITE, 0.25f),
+            blend(primary, secondary, 0.45f),
+            Shader.TileMode.CLAMP,
+        )
     }
 
     fun setStatus(title: CharSequence, subtitle: CharSequence?) {
@@ -115,6 +159,13 @@ class KeyVoiceAccessibilityOverlayView @JvmOverloads constructor(
     }
 
     fun playEntrance() {
+        if (!ValueAnimator.areAnimatorsEnabled()) {
+            alpha = 1f
+            scaleX = 1f
+            scaleY = 1f
+            translationY = 0f
+            return
+        }
         alpha = 0f
         scaleX = 0.88f
         scaleY = 0.88f
@@ -133,47 +184,17 @@ class KeyVoiceAccessibilityOverlayView @JvmOverloads constructor(
         super.onDraw(canvas)
         bounds.set(0f, 0f, width.toFloat(), height.toFloat())
         val radius = dp(24).toFloat()
-        val primary = ContextCompat.getColor(context, R.color.primary)
-        val secondary = ContextCompat.getColor(context, R.color.secondary)
-        val surface = ContextCompat.getColor(context, R.color.surface)
-        val error = ContextCompat.getColor(context, R.color.error)
-        val success = ContextCompat.getColor(context, R.color.success)
-        val accent = when (visualState) {
-            VisualState.RECORDING -> error
-            VisualState.SUCCESS -> success
-            VisualState.ERROR -> error
-            VisualState.PROCESSING -> secondary
-            else -> primary
-        }
-
         shimmerOffset = ((SystemClock.uptimeMillis() % 1800L) / 1800f)
-        backgroundPaint.shader = LinearGradient(
-            width * (shimmerOffset - 0.55f),
-            0f,
-            width * (shimmerOffset + 0.55f),
-            height.toFloat(),
-            intArrayOf(surface, blend(surface, accent, 0.10f), surface),
-            floatArrayOf(0f, 0.5f, 1f),
-            Shader.TileMode.CLAMP
-        )
+        shimmerMatrix.setTranslate(width * shimmerOffset, 0f)
+        backgroundShader?.setLocalMatrix(shimmerMatrix)
         backgroundPaint.setShadowLayer(dp(14).toFloat(), 0f, dp(5).toFloat(), 0x26000000)
         canvas.drawRoundRect(bounds, radius, radius, backgroundPaint)
-
-        strokePaint.shader = LinearGradient(
-            0f,
-            0f,
-            width.toFloat(),
-            height.toFloat(),
-            blend(accent, Color.WHITE, 0.25f),
-            blend(primary, secondary, 0.45f),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(bounds.insetCopy(dp(0.75f)), radius, radius, strokePaint)
-        postInvalidateOnAnimation()
-    }
-
-    private fun RectF.insetCopy(value: Float): RectF {
-        return RectF(left + value, top + value, right - value, bottom - value)
+        val inset = dp(0.75f)
+        strokeBounds.set(inset, inset, width - inset, height - inset)
+        canvas.drawRoundRect(strokeBounds, radius, radius, strokePaint)
+        if (visualState.isAnimated() && ValueAnimator.areAnimatorsEnabled()) {
+            postInvalidateOnAnimation()
+        }
     }
 
     private fun dp(value: Int): Int {
@@ -195,6 +216,13 @@ class KeyVoiceAccessibilityOverlayView @JvmOverloads constructor(
     }
 }
 
+private fun KeyVoiceAccessibilityOverlayView.VisualState.isAnimated(): Boolean = when (this) {
+    KeyVoiceAccessibilityOverlayView.VisualState.ACTIVATING,
+    KeyVoiceAccessibilityOverlayView.VisualState.RECORDING,
+    KeyVoiceAccessibilityOverlayView.VisualState.PROCESSING -> true
+    else -> false
+}
+
 private class AiOrbView(context: Context) : View(context) {
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val ringPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -212,12 +240,48 @@ private class AiOrbView(context: Context) : View(context) {
     }
     private val arcBounds = RectF()
     private val checkPath = Path()
+    private var orbGradient: RadialGradient? = null
     private var visualState = KeyVoiceAccessibilityOverlayView.VisualState.IDLE
     private var amplitudeLevel = 0.12f
 
     fun setVisualState(state: KeyVoiceAccessibilityOverlayView.VisualState) {
         visualState = state
+        rebuildGradient()
         invalidate()
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        rebuildGradient()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        rebuildGradient()
+    }
+
+    private fun rebuildGradient() {
+        if (width <= 0 || height <= 0) return
+        val cx = width / 2f
+        val cy = height / 2f
+        val minSide = min(width, height).toFloat()
+        val primary = ContextCompat.getColor(context, R.color.primary)
+        val secondary = ContextCompat.getColor(context, R.color.secondary)
+        val accent = when (visualState) {
+            KeyVoiceAccessibilityOverlayView.VisualState.RECORDING,
+            KeyVoiceAccessibilityOverlayView.VisualState.ERROR -> ContextCompat.getColor(context, R.color.error)
+            KeyVoiceAccessibilityOverlayView.VisualState.SUCCESS -> ContextCompat.getColor(context, R.color.success)
+            KeyVoiceAccessibilityOverlayView.VisualState.PROCESSING -> secondary
+            else -> primary
+        }
+        orbGradient = RadialGradient(
+            cx - minSide * 0.12f,
+            cy - minSide * 0.16f,
+            minSide * 0.58f,
+            intArrayOf(Color.WHITE, blend(primary, secondary, 0.52f), accent),
+            floatArrayOf(0f, 0.55f, 1f),
+            Shader.TileMode.CLAMP,
+        )
     }
 
     fun updateAudioAmplitude(amplitude: Int) {
@@ -252,14 +316,7 @@ private class AiOrbView(context: Context) : View(context) {
             canvas.drawCircle(cx, cy, minSide * (0.32f + phase * 0.22f), ringPaint)
         }
 
-        fillPaint.shader = RadialGradient(
-            cx - minSide * 0.12f,
-            cy - minSide * 0.16f,
-            minSide * 0.58f,
-            intArrayOf(Color.WHITE, blend(primary, secondary, 0.52f), accent),
-            floatArrayOf(0f, 0.55f, 1f),
-            Shader.TileMode.CLAMP
-        )
+        fillPaint.shader = orbGradient
         canvas.drawCircle(cx, cy, minSide * 0.31f, fillPaint)
         fillPaint.shader = null
         fillPaint.color = withAlpha(Color.WHITE, 72)
@@ -274,7 +331,9 @@ private class AiOrbView(context: Context) : View(context) {
             KeyVoiceAccessibilityOverlayView.VisualState.IDLE -> drawIdleSpark(canvas, cx, cy, minSide, time, Color.WHITE)
         }
 
-        postInvalidateOnAnimation()
+        if (visualState.isAnimated() && ValueAnimator.areAnimatorsEnabled()) {
+            postInvalidateOnAnimation()
+        }
     }
 
     private fun drawSearching(canvas: Canvas, cx: Float, cy: Float, minSide: Float, time: Long, color: Int) {

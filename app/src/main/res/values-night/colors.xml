@@ -11,6 +11,13 @@
     <!-- Keyboard (Dark) -->
     <color name="keyboard_background">#1C1C1E</color>
     <color name="keyboard_bottom_bar">#2C2C2E</color>
+    <color name="keyboard_glass_start">#29273B</color>
+    <color name="keyboard_glass_end">#211F31</color>
+    <color name="keyboard_glass_edge">#625D85</color>
+    <color name="keyboard_panel_start">#343149</color>
+    <color name="keyboard_panel_end">#2B293E</color>
+    <color name="keyboard_bar_start">#302D45</color>
+    <color name="keyboard_bar_end">#272538</color>
     <color name="accessibility_overlay_stroke">#556C63FF</color>
 
     <!-- Text (Dark) -->

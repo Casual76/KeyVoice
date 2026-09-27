@@ -28,13 +28,14 @@ class DictationHistoryStore(private val context: Context) {
         private const val MAX_ITEMS = 10
     }
 
-    private val prefs: SharedPreferences by lazy {
+    private val prefs: SharedPreferences? by lazy {
         createPrefs()
     }
 
     fun getItems(): List<DictationHistoryItem> {
-        val raw = prefs.getString(KEY_ITEMS, "[]").orEmpty()
+        val secure = prefs ?: return emptyList()
         return runCatching {
+            val raw = secure.getString(KEY_ITEMS, "[]").orEmpty()
             parseItems(raw)
         }.getOrElse { error ->
             Log.w(TAG, "Unable to read dictation history; clearing it.", error)
@@ -44,22 +45,45 @@ class DictationHistoryStore(private val context: Context) {
     }
 
     fun add(item: DictationHistoryItem) {
+        val secure = prefs ?: return
         val updated = (listOf(item) + getItems().filterNot { it.id == item.id })
             .take(MAX_ITEMS)
-        prefs.edit().putString(KEY_ITEMS, serializeItems(updated)).apply()
+        runCatching {
+            secure.edit().putString(KEY_ITEMS, serializeItems(updated)).apply()
+        }.onFailure { Log.w(TAG, "Unable to save encrypted dictation history.", it) }
     }
 
     fun clear() {
-        prefs.edit().remove(KEY_ITEMS).apply()
+        runCatching { prefs?.edit()?.remove(KEY_ITEMS)?.apply() }
+            .onFailure { Log.w(TAG, "Unable to clear dictation history.", it) }
     }
 
-    private fun createPrefs(): SharedPreferences {
-        return runCatching {
+    private fun createPrefs(): SharedPreferences? {
+        val secure = runCatching {
+            buildEncryptedPrefs()
+        }.recoverCatching { firstError ->
+            Log.w(TAG, "Encrypted history unreadable; resetting it.", firstError)
+            context.deleteSharedPreferences(PREFS_NAME)
             buildEncryptedPrefs()
         }.getOrElse { error ->
-            Log.w(TAG, "Encrypted history unavailable; using private fallback prefs.", error)
-            context.getSharedPreferences(FALLBACK_PREFS_NAME, Context.MODE_PRIVATE)
+            Log.w(TAG, "Encrypted history unavailable; history disabled.", error)
+            context.deleteSharedPreferences(FALLBACK_PREFS_NAME)
+            return null
         }
+        val legacy = context.getSharedPreferences(FALLBACK_PREFS_NAME, Context.MODE_PRIVATE)
+        try {
+            val oldHistory = legacy.getString(KEY_ITEMS, null)
+            if (!oldHistory.isNullOrBlank() && secure.getString(KEY_ITEMS, null) == null) {
+                check(secure.edit().putString(KEY_ITEMS, oldHistory).commit()) {
+                    "Unable to migrate dictation history to encrypted storage"
+                }
+            }
+        } catch (error: Exception) {
+            Log.w(TAG, "Unable to migrate legacy dictation history.", error)
+        } finally {
+            context.deleteSharedPreferences(FALLBACK_PREFS_NAME)
+        }
+        return secure
     }
 
     private fun buildEncryptedPrefs(): SharedPreferences {

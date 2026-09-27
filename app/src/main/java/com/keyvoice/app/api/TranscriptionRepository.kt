@@ -7,6 +7,7 @@ import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import com.keyvoice.app.BuildConfig
+import kotlinx.coroutines.CancellationException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.File
@@ -105,6 +106,8 @@ class TranscriptionRepository {
                     Result.failure(ApiErrorMapper.fromResponse(response.code(), response.errorBody()))
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: java.net.SocketTimeoutException) {
             Result.failure(ApiException("Timeout: riprova", -1))
         } catch (e: java.net.UnknownHostException) {

@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@color/keyboard_background"
+    android:background="@drawable/bg_keyboard"
     android:clipChildren="false"
     android:clipToPadding="false">
 
@@ -148,6 +148,7 @@
             android:gravity="top|start"
             android:hint="@string/preview_hint"
             android:inputType="textMultiLine|textCapSentences"
+            android:importantForAutofill="no"
             android:maxLines="5"
             android:minLines="3"
             android:padding="4dp"
@@ -303,7 +304,7 @@
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="12dp"
-        android:background="@color/keyboard_bottom_bar">
+        android:background="@drawable/bg_keyboard_bottom_bar">
 
         <!-- Switch Keyboard Button -->
         <ImageButton

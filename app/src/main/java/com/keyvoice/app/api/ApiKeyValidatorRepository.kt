@@ -1,6 +1,7 @@
 package com.keyvoice.app.api
 
 import com.keyvoice.app.BuildConfig
+import kotlinx.coroutines.CancellationException
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -54,6 +55,8 @@ class ApiKeyValidatorRepository {
             } else {
                 Result.failure(ApiErrorMapper.fromResponse(response.code(), response.errorBody()))
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: java.net.SocketTimeoutException) {
             Result.failure(ApiException("Timeout: riprova", -1))
         } catch (e: java.net.UnknownHostException) {

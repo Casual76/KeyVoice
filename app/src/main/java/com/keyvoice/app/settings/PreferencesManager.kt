@@ -107,16 +107,32 @@ class PreferencesManager private constructor(private val context: Context) {
     }
 
     private fun createEncryptedPrefs(): SharedPreferences {
-        return runCatching {
+        val secure = runCatching {
             buildEncryptedPrefs()
         }.recoverCatching { firstError ->
             Log.w("PreferencesManager", "Encrypted preferences were unreadable; resetting secure prefs.", firstError)
             context.deleteSharedPreferences(ENCRYPTED_PREFS_NAME)
             buildEncryptedPrefs()
         }.getOrElse { secondError ->
-            Log.e("PreferencesManager", "Encrypted preferences unavailable; using fallback prefs.", secondError)
-            context.getSharedPreferences(FALLBACK_PREFS_NAME, Context.MODE_PRIVATE)
+            Log.e("PreferencesManager", "Encrypted preferences unavailable.", secondError)
+            context.deleteSharedPreferences(FALLBACK_PREFS_NAME)
+            throw IllegalStateException("Secure API key storage unavailable", secondError)
         }
+        // Older versions could save the key in plain SharedPreferences if crypto failed.
+        // Move it to encrypted storage before deleting that legacy file.
+        val legacy = context.getSharedPreferences(FALLBACK_PREFS_NAME, Context.MODE_PRIVATE)
+        try {
+            val legacyKey = legacy.getString(KEY_API_KEY, null)
+            if (!legacyKey.isNullOrBlank() && secure.getString(KEY_API_KEY, null).isNullOrBlank()) {
+                check(secure.edit().putString(KEY_API_KEY, legacyKey).commit()) {
+                    "Unable to migrate API key to encrypted storage"
+                }
+            }
+        } finally {
+            // Never leave a plaintext copy behind, including when migration cannot complete.
+            context.deleteSharedPreferences(FALLBACK_PREFS_NAME)
+        }
+        return secure
     }
 
     private fun buildEncryptedPrefs(): SharedPreferences {
@@ -143,14 +159,8 @@ class PreferencesManager private constructor(private val context: Context) {
             ""
         }
         set(value) {
-            runCatching {
-                encryptedPrefs.edit().putString(KEY_API_KEY, value).apply()
-            }.onFailure { error ->
-                Log.e("PreferencesManager", "Unable to write encrypted API key; using fallback prefs.", error)
-                context.getSharedPreferences(FALLBACK_PREFS_NAME, Context.MODE_PRIVATE)
-                    .edit()
-                    .putString(KEY_API_KEY, value)
-                    .apply()
+            check(encryptedPrefs.edit().putString(KEY_API_KEY, value).commit()) {
+                "Unable to persist encrypted API key"
             }
         }
 

@@ -8,18 +8,20 @@ val localProps = Properties().apply {
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
     namespace = "com.keyvoice.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.keyvoice.app"
         minSdk = 33
         targetSdk = 35
-        versionCode = 21
-        versionName = "1.2.14"
+        versionCode = 22
+        versionName = "1.2.15"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -55,14 +57,15 @@ android {
     }
 
     buildFeatures {
-        viewBinding = true
         buildConfig = true
+        compose = true
     }
 }
 
 dependencies {
     // Fluid Engine: aggiornamento in-app (porta con se' engine-net ed engine-foundation)
     implementation(project(":engine-update"))
+    implementation(project(":engine-ui"))
 
     // AndroidX
     implementation(libs.androidx.core.ktx)
@@ -70,6 +73,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.security.crypto)
     implementation(libs.androidx.lifecycle.runtime)
+    implementation(libs.androidx.lifecycle.viewmodel)
 
     // Kotlin Coroutines
     implementation(libs.kotlinx.coroutines.android)
@@ -81,4 +85,6 @@ dependencies {
     implementation(libs.okhttp.logging)
 
     testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.test.ext.junit)
 }
