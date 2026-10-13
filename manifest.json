@@ -15,22 +15,30 @@
       "ref": "main"
     },
     "stable": {
-      "version": "1.2.15",
-      "releaseDate": "2026-09-27",
-      "changelog": "KeyVoice riprogettata con Fluid Engine 2.7.1 e una nuova interfaccia in vetro.\nImpostazioni più chiare: scelta dei modelli, vocabolario esteso e modifiche mantenute in bozza fino a Salva.\nTastiera e pannello di dettatura rifiniti, con miglioramenti a leggibilità e accessibilità.\nCorretti errori nella gestione dei modelli Groq e rafforzata la protezione della chiave API e della cronologia.",
-      "releaseTag": "stable-keyvoice-v1.2.15",
-      "apkAsset": "keyvoice-1.2.15.apk",
-      "sizeBytes": 6682870
+      "version": "1.2.16",
+      "releaseDate": "2026-10-13",
+      "changelog": "Il vetro dell'app è aggiornato (Fluid Engine 2.13.0). I pannelli grandi sono più sfocati e piegano di più la luce ai bordi, e un vetro sopra un altro vetro lo sfoca invece di lasciar vedere la pagina nitida. I pulsanti si possono tenere premuti e trascinare senza che la pagina scorra, e interruttori e cursori non la fanno più scorrere mentre li muovi. Il cursore della durata massima è nuovo: una pillola bianca che sotto il dito diventa una lente.",
+      "releaseTag": "stable-keyvoice-v1.2.16",
+      "apkAsset": "keyvoice-1.2.16.apk",
+      "sizeBytes": 6803541
     },
     "beta": {
-      "version": "1.2.15",
-      "releaseDate": "2026-09-27",
-      "changelog": "KeyVoice riprogettata con Fluid Engine 2.7.1 e una nuova interfaccia in vetro.\nImpostazioni più chiare: scelta dei modelli, vocabolario esteso e modifiche mantenute in bozza fino a Salva.\nTastiera e pannello di dettatura rifiniti, con miglioramenti a leggibilità e accessibilità.\nCorretti errori nella gestione dei modelli Groq e rafforzata la protezione della chiave API e della cronologia.",
-      "releaseTag": "stable-keyvoice-v1.2.15",
-      "apkAsset": "keyvoice-1.2.15.apk",
-      "sizeBytes": 6682870
+      "version": "1.2.16",
+      "releaseDate": "2026-10-13",
+      "changelog": "Il vetro dell'app è aggiornato (Fluid Engine 2.13.0). I pannelli grandi sono più sfocati e piegano di più la luce ai bordi, e un vetro sopra un altro vetro lo sfoca invece di lasciar vedere la pagina nitida. I pulsanti si possono tenere premuti e trascinare senza che la pagina scorra, e interruttori e cursori non la fanno più scorrere mentre li muovi. Il cursore della durata massima è nuovo: una pillola bianca che sotto il dito diventa una lente.",
+      "releaseTag": "stable-keyvoice-v1.2.16",
+      "apkAsset": "keyvoice-1.2.16.apk",
+      "sizeBytes": 6803541
     },
     "history": [
+      {
+        "version": "1.2.15",
+        "releaseDate": "2026-09-27",
+        "changelog": "KeyVoice riprogettata con Fluid Engine 2.7.1 e una nuova interfaccia in vetro.\nImpostazioni più chiare: scelta dei modelli, vocabolario esteso e modifiche mantenute in bozza fino a Salva.\nTastiera e pannello di dettatura rifiniti, con miglioramenti a leggibilità e accessibilità.\nCorretti errori nella gestione dei modelli Groq e rafforzata la protezione della chiave API e della cronologia.",
+        "releaseTag": "stable-keyvoice-v1.2.15",
+        "apkAsset": "keyvoice-1.2.15.apk",
+        "sizeBytes": 6682870
+      },
       {
         "version": "1.2.14",
         "releaseDate": "2026-08-23",
