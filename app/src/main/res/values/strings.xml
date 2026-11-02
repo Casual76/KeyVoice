@@ -46,7 +46,6 @@
     <string name="settings_models_loading">Aggiornamento modelli Groq...</string>
     <string name="settings_models_live">Elenco aggiornato da Groq</string>
     <string name="settings_models_fallback">Elenco locale: impossibile aggiornare da Groq</string>
-    <string name="settings_choice_selected">Scelto</string>
     <string name="settings_phase2_enabled">Abilita correzione testo (Fase 2)</string>
     <string name="settings_phase2_description">Usa un modello LLM per correggere punteggiatura, grammatica ed errori. Se disattivata, resta attiva la punteggiatura parlata di base.</string>
     <string name="settings_prompt_preset">Preset prompt</string>
@@ -134,28 +133,13 @@
     <string name="settings_section_refinement">Correzione testo</string>
     <string name="settings_section_behavior">Scorciatoia e comportamento</string>
     <string name="settings_section_keyboard_fallback">Tastiera KeyVoice secondaria</string>
-    <string name="settings_section_updates">Aggiornamenti</string>
     <string name="settings_section_show">Mostra</string>
     <string name="settings_section_hide">Nascondi</string>
     <string name="settings_keyboard_fallback_description">La tastiera resta disponibile come percorso secondario quando non vuoi usare la scorciatoia accessibilita.</string>
     <string name="settings_auto_start_recording_description_fallback">Avvia automaticamente la registrazione solo quando selezioni la tastiera KeyVoice come fallback.</string>
 
     <!-- Updates -->
-    <string name="update_current_version">Versione installata: %s</string>
-    <string name="update_status_idle">Controlla le release Pampa Store.</string>
-    <string name="update_status_checking">Controllo aggiornamenti...</string>
-    <string name="update_status_none">KeyVoice è già aggiornato.</string>
-    <string name="update_status_available">Nuova versione disponibile: %s</string>
     <string name="update_status_error">Controllo aggiornamenti non riuscito. Riprova.</string>
-    <string name="update_action_check">Controlla</string>
-    <string name="update_action_install">Aggiorna</string>
-    <string name="update_action_later">Più tardi</string>
-    <string name="update_action_ignore">Ignora versione</string>
-    <string name="update_install_downloading">Download aggiornamento: %d%%</string>
-    <string name="update_install_verifying">Verifica APK...</string>
-    <string name="update_install_installing">Installazione aggiornamento...</string>
-    <string name="update_install_awaiting_user">Conferma l\'installazione sul dispositivo.</string>
-    <string name="update_install_installed">Aggiornamento installato.</string>
     <string name="update_notification_channel_name">Aggiornamenti KeyVoice</string>
     <string name="update_notification_channel_description">Avvisi quando Pampa Store pubblica una nuova versione di KeyVoice.</string>
     <string name="update_notification_title">Aggiornamento KeyVoice disponibile</string>

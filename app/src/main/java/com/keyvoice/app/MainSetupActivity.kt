@@ -26,9 +26,14 @@ import com.keyvoice.app.settings.PreferencesManager
 import com.keyvoice.app.settings.PromptPreset
 import com.keyvoice.app.ui.setup.KeyVoiceSetupScreen
 import com.keyvoice.app.update.KeyVoiceUpdateCoordinator
-import dev.antigravity.fluidengine.foundation.AppUpdateInstallState
+import com.keyvoice.app.update.updateStateAfterCheck
+import com.keyvoice.app.update.updateStateAfterFailedCheck
 import dev.antigravity.fluidengine.foundation.AvailableAppUpdate
 import dev.antigravity.fluidengine.foundation.EngineSettings
+import dev.antigravity.fluidengine.ui.fluid.FluidUpdateUiState
+import dev.antigravity.fluidengine.ui.fluid.isBusy
+import dev.antigravity.fluidengine.ui.fluid.toFluidUpdateRelease
+import dev.antigravity.fluidengine.ui.fluid.toFluidUpdateState
 import dev.antigravity.fluidengine.ui.theme.AccentPreset
 import dev.antigravity.fluidengine.ui.theme.FluidTheme
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +64,14 @@ class MainSetupActivity : AppCompatActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T = SetupState(prefs) as T
         })[SetupState::class.java]
         updates = KeyVoiceUpdateCoordinator(this, prefs)
+        // Le coroutine dell'attivita' muoiono con lei (anche con una rotazione), lo stato nel ViewModel no:
+        // un controllo o uno scaricamento rimasto a meta' non ha piu' nessuno che lo porti avanti, e
+        // lasciarlo "in corso" bloccherebbe per sempre il tasto che lo ripete.
+        if (ui.updateState.isBusy) {
+            ui.updateState = ui.availableUpdate
+                ?.let { FluidUpdateUiState.Available(it.toFluidUpdateRelease()) }
+                ?: FluidUpdateUiState.Idle
+        }
         setContent {
             FluidTheme(
                 settings = EngineSettings(hapticsEnabled = ui.haptic),
@@ -80,14 +93,14 @@ class MainSetupActivity : AppCompatActivity() {
                     onSave = ::saveSettings,
                     onCheckUpdate = { checkForUpdates(manual = true) },
                     onInstallUpdate = ::startUpdateInstall,
-                    onLaterUpdate = {
-                        ui.availableUpdate = null
-                        ui.installState = null
-                    },
+                    // "Piu' tardi" chiude solo l'avviso a foglio: la sezione nelle impostazioni resta e
+                    // continua a offrire l'installazione. "Salta" e' invece per sempre, per quella versione.
+                    onLaterUpdate = { ui.updatePromptRequested = false },
                     onIgnoreUpdate = {
                         ui.availableUpdate?.let { updates.ignoreVersion(it.version) }
                         ui.availableUpdate = null
-                        ui.installState = null
+                        ui.updateState = FluidUpdateUiState.Idle
+                        ui.updatePromptRequested = false
                     },
                     onResetBubble = {
                         prefs.resetAccessibilityBubblePosition()
@@ -113,7 +126,10 @@ class MainSetupActivity : AppCompatActivity() {
         if (!::ui.isInitialized) return
         refreshSetupStatus()
         refreshGroqModels()
-        checkForUpdates(manual = intent?.getBooleanExtra(EXTRA_SHOW_UPDATE_CARD, false) == true)
+        // Dalla notifica si arriva per l'aggiornamento: il controllo e' esplicito e, se c'e' una
+        // novita', si apre l'avviso a foglio invece di lasciare la persona in cima alla dashboard.
+        val fromNotification = intent?.getBooleanExtra(EXTRA_SHOW_UPDATE_CARD, false) == true
+        checkForUpdates(manual = fromNotification, promptIfAvailable = fromNotification)
         intent?.removeExtra(EXTRA_SHOW_UPDATE_CARD)
     }
 
@@ -239,32 +255,29 @@ class MainSetupActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkForUpdates(manual: Boolean) {
+    private fun checkForUpdates(manual: Boolean, promptIfAvailable: Boolean = false) {
         if (updateCheckJob?.isActive == true) return
+        // Un controllo o un'installazione in corso non si interrompe: tornare dalla finestra di
+        // conferma di Android riapre l'attivita', e ripartire da qui azzererebbe la barra.
+        if (ui.updateState.isBusy) return
         if (!manual && System.currentTimeMillis() - prefs.lastAutomaticUpdateCheckMillis <
             KeyVoiceUpdateCoordinator.AUTOMATIC_CHECK_INTERVAL_MS) return
-        if (manual) {
-            ui.availableUpdate = null
-            ui.installState = null
-        }
-        ui.checkingUpdate = true
-        ui.updateMessage = getString(R.string.update_status_checking)
+        if (manual) ui.availableUpdate = null
+        ui.updateState = FluidUpdateUiState.Checking
         updateCheckJob = lifecycleScope.launch {
             val result = updates.checkForUpdate(manual = manual, notifyIfAvailable = true)
-            ui.checkingUpdate = false
             result.fold(
                 onSuccess = { update ->
                     ui.availableUpdate = update
-                    ui.installState = null
-                    ui.updateMessage = if (update == null) getString(
-                        if (manual) R.string.update_status_none else R.string.update_status_idle
-                    ) else getString(R.string.update_status_available, update.version)
+                    ui.updateState = updateStateAfterCheck(update, manual)
+                    ui.lastUpdateCheckMillis = System.currentTimeMillis()
+                    ui.updatePromptRequested = promptIfAvailable && update != null
                 },
                 onFailure = { error ->
                     ui.availableUpdate = null
                     Log.w("KeyVoiceUpdates", "Update check failed", error)
                     val message = getString(R.string.update_status_error)
-                    ui.installState = AppUpdateInstallState.Error(message)
+                    ui.updateState = updateStateAfterFailedCheck(message)
                     if (manual) Toast.makeText(this@MainSetupActivity, message, Toast.LENGTH_LONG).show()
                 },
             )
@@ -273,10 +286,11 @@ class MainSetupActivity : AppCompatActivity() {
 
     private fun startUpdateInstall() {
         val update = ui.availableUpdate ?: return
-        if (ui.installState.isBusy()) return
+        if (ui.updateState.isBusy) return
+        val release = update.toFluidUpdateRelease()
         updateInstallJob?.cancel()
         updateInstallJob = lifecycleScope.launch {
-            updates.install(update).collect { ui.installState = it }
+            updates.install(update).collect { ui.updateState = it.toFluidUpdateState(release) }
         }
     }
 
@@ -308,16 +322,10 @@ internal class SetupState(prefs: PreferencesManager) : ViewModel() {
     var returnToPreviousKeyboard by mutableStateOf(prefs.returnToPreviousKeyboard)
     var autoStartRecording by mutableStateOf(prefs.autoStartRecording)
     var accessibilityDictation by mutableStateOf(prefs.accessibilityDictationEnabled)
+    /** La novita' trovata, per installarla; quello che si vede e' [updateState]. */
     var availableUpdate by mutableStateOf<AvailableAppUpdate?>(null)
-    var installState by mutableStateOf<AppUpdateInstallState?>(null)
-    var checkingUpdate by mutableStateOf(false)
-    var updateMessage by mutableStateOf("")
-}
-
-internal fun AppUpdateInstallState?.isBusy(): Boolean = when (this) {
-    is AppUpdateInstallState.Downloading,
-    is AppUpdateInstallState.Verifying,
-    is AppUpdateInstallState.Installing,
-    is AppUpdateInstallState.AwaitingUserAction -> true
-    else -> false
+    var updateState by mutableStateOf<FluidUpdateUiState>(FluidUpdateUiState.Idle)
+    var lastUpdateCheckMillis by mutableStateOf(prefs.lastAutomaticUpdateCheckMillis.takeIf { it > 0L })
+    /** Vero se la persona e' arrivata dalla notifica: allora l'avviso si apre come foglio. */
+    var updatePromptRequested by mutableStateOf(false)
 }

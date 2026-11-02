@@ -1,7 +1,7 @@
 package com.keyvoice.app.ui.setup
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Mic
@@ -26,39 +26,45 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.keyvoice.app.BuildConfig
 import com.keyvoice.app.R
 import com.keyvoice.app.SetupState
-import com.keyvoice.app.isBusy
 import com.keyvoice.app.settings.PreferencesManager
 import com.keyvoice.app.settings.PromptPreset
-import dev.antigravity.fluidengine.foundation.AppUpdateInstallState
 import dev.antigravity.fluidengine.ui.fluid.FluidAmbient
 import dev.antigravity.fluidengine.ui.fluid.FluidBarAction
 import dev.antigravity.fluidengine.ui.fluid.FluidButton
 import dev.antigravity.fluidengine.ui.fluid.FluidButtonStyle
 import dev.antigravity.fluidengine.ui.fluid.FluidChip
-import dev.antigravity.fluidengine.ui.fluid.FluidHeroMotif
-import dev.antigravity.fluidengine.ui.fluid.FluidHeroTone
+import dev.antigravity.fluidengine.ui.fluid.FluidChoiceRow
 import dev.antigravity.fluidengine.ui.fluid.FluidGlassModalHost
 import dev.antigravity.fluidengine.ui.fluid.FluidGlassModalPortal
 import dev.antigravity.fluidengine.ui.fluid.FluidGlassModalPresentation
-import dev.antigravity.fluidengine.ui.fluid.LocalFluidGlassModalHostState
-import dev.antigravity.fluidengine.ui.fluid.rememberFluidGlassModalHostState
+import dev.antigravity.fluidengine.ui.fluid.FluidHeroMotif
+import dev.antigravity.fluidengine.ui.fluid.FluidHeroTone
+import dev.antigravity.fluidengine.ui.fluid.FluidMotion
+import dev.antigravity.fluidengine.ui.fluid.FluidPressGrip
 import dev.antigravity.fluidengine.ui.fluid.FluidScreen
 import dev.antigravity.fluidengine.ui.fluid.FluidSectionHeader
+import dev.antigravity.fluidengine.ui.fluid.FluidSheetScaffold
 import dev.antigravity.fluidengine.ui.fluid.FluidSlider
-import dev.antigravity.fluidengine.ui.fluid.FluidSwitch
 import dev.antigravity.fluidengine.ui.fluid.FluidTextField
+import dev.antigravity.fluidengine.ui.fluid.FluidToggleRow
+import dev.antigravity.fluidengine.ui.fluid.FluidUpdatePromptSheet
+import dev.antigravity.fluidengine.ui.fluid.LocalFluidGlassModalHostState
+import dev.antigravity.fluidengine.ui.fluid.LocalFluidItemSpacing
+import dev.antigravity.fluidengine.ui.fluid.fluidExpandOrigin
+import dev.antigravity.fluidengine.ui.fluid.fluidLicensesSection
+import dev.antigravity.fluidengine.ui.fluid.fluidUpdateSection
+import dev.antigravity.fluidengine.ui.fluid.rememberFluidGlassModalHostState
 import dev.antigravity.fluidengine.ui.theme.FluidCard
-import dev.antigravity.fluidengine.ui.theme.FluidHeroCard
+import dev.antigravity.fluidengine.ui.theme.FluidInlineMessage
 import dev.antigravity.fluidengine.ui.theme.FluidListDivider
 import dev.antigravity.fluidengine.ui.theme.FluidListGroup
 import dev.antigravity.fluidengine.ui.theme.FluidListRow
@@ -100,17 +106,21 @@ internal fun KeyVoiceSetupScreen(
             )
         },
     ) {
+        // Lo stato della configurazione: una frase con un'icona, verde se si puo' dettare e ambra
+        // finche' manca qualcosa. Era un FluidHeroCard (deprecato dalla 2.13): quello e' un riquadro
+        // che dice una cosa, e questo e' esattamente il suo successore.
         item(key = "hero") {
-            FluidHeroCard(
+            FluidInlineMessage(
                 title = stringResource(if (ready) R.string.setup_wizard_title_ready else R.string.setup_wizard_title),
-                subtitle = stringResource(
+                message = stringResource(
                     when {
                         !state.hasApiKey -> R.string.setup_wizard_status_api_missing
                         !state.accessibilityEnabled -> R.string.setup_wizard_status_accessibility_missing
                         else -> R.string.setup_wizard_status_ready
                     }
                 ),
-                trailing = { Icon(Icons.Rounded.Mic, contentDescription = null) },
+                tone = if (ready) FluidTone.Success else FluidTone.Warning,
+                leading = { Icon(Icons.Rounded.Mic, contentDescription = null) },
             )
         }
         item(key = "setup-header") { FluidSectionHeader(stringResource(R.string.setup_quick_start)) }
@@ -155,6 +165,7 @@ internal fun KeyVoiceSetupScreen(
                     text = stringResource(if (state.hasApiKey) R.string.setup_api_key_ready else R.string.setup_api_key_missing),
                     style = MaterialTheme.typography.titleMedium,
                 )
+                // La chiave Groq e' un segreto: puntini, occhio per mostrarla, tastiera senza correzione.
                 FluidTextField(
                     value = state.apiKeyInput,
                     onValueChange = { state.apiKeyInput = it },
@@ -162,9 +173,9 @@ internal fun KeyVoiceSetupScreen(
                     label = stringResource(R.string.settings_api_key),
                     placeholder = stringResource(R.string.settings_api_key_hint),
                     supportingText = if (state.hasApiKey) stringResource(R.string.settings_api_key_saved_hint) else null,
-                    visualTransformation = PasswordVisualTransformation(),
+                    secret = true,
                 )
-                if (LocalDensity.current.fontScale >= 1.5f) {
+                if (largeText) {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         FluidButton(
                             text = stringResource(R.string.settings_api_key_test),
@@ -202,13 +213,9 @@ internal fun KeyVoiceSetupScreen(
         item(key = "transcription-header") { FluidSectionHeader(stringResource(R.string.settings_section_transcription)) }
         item(key = "transcription") {
             FluidListGroup(glass = true) {
-                ChoiceRow(
+                PickerRow(
                     title = stringResource(R.string.settings_language),
-                    selected = when (state.language) {
-                        PreferencesManager.LANGUAGE_ENGLISH -> stringResource(R.string.lang_english)
-                        PreferencesManager.LANGUAGE_AUTO -> stringResource(R.string.lang_auto)
-                        else -> stringResource(R.string.lang_italian)
-                    },
+                    selectedKey = state.language,
                     options = listOf(
                         PreferencesManager.LANGUAGE_ITALIAN to stringResource(R.string.lang_italian),
                         PreferencesManager.LANGUAGE_ENGLISH to stringResource(R.string.lang_english),
@@ -217,9 +224,9 @@ internal fun KeyVoiceSetupScreen(
                     onSelected = { state.language = it },
                 )
                 FluidListDivider()
-                ChoiceRow(
+                PickerRow(
                     title = stringResource(R.string.settings_whisper_model),
-                    selected = state.whisperModel,
+                    selectedKey = state.whisperModel,
                     options = state.whisperOptions.map { it to it },
                     onSelected = { state.whisperModel = it },
                 )
@@ -237,27 +244,38 @@ internal fun KeyVoiceSetupScreen(
         }
         item(key = "refinement-header") { FluidSectionHeader(stringResource(R.string.settings_section_refinement)) }
         item(key = "refinement") {
-            FluidCard(glass = true) {
-                ToggleRow(
-                    title = stringResource(R.string.settings_phase2_enabled),
-                    subtitle = stringResource(R.string.settings_phase2_description),
-                    checked = state.phase2,
-                    onChecked = { state.phase2 = it },
-                )
-                if (state.phase2) {
-                    ChoiceRow(
-                        title = stringResource(R.string.settings_prompt_preset),
-                        selected = state.preset.displayName,
-                        options = PromptPreset.entries.map { it.id to it.displayName },
-                        onSelected = { state.preset = PromptPreset.fromId(it) },
+            // Un solo item perche' il gruppo e la scheda del prompt crescono e si ritirano insieme,
+            // come faceva la card unica di prima (animateContentSize), a passo di FluidMotion.
+            Column(
+                modifier = Modifier.animateContentSize(FluidMotion.intSize()),
+                verticalArrangement = Arrangement.spacedBy(LocalFluidItemSpacing.current),
+            ) {
+                FluidListGroup(glass = true) {
+                    FluidToggleRow(
+                        title = stringResource(R.string.settings_phase2_enabled),
+                        subtitle = stringResource(R.string.settings_phase2_description),
+                        checked = state.phase2,
+                        onCheckedChange = { state.phase2 = it },
                     )
-                    ChoiceRow(
-                        title = stringResource(R.string.settings_llm_model),
-                        selected = state.llmModel,
-                        options = state.llmOptions.map { it to it },
-                        onSelected = { state.llmModel = it },
-                    )
-                    if (state.preset == PromptPreset.CUSTOM) {
+                    if (state.phase2) {
+                        FluidListDivider()
+                        PickerRow(
+                            title = stringResource(R.string.settings_prompt_preset),
+                            selectedKey = state.preset.id,
+                            options = PromptPreset.entries.map { it.id to it.displayName },
+                            onSelected = { state.preset = PromptPreset.fromId(it) },
+                        )
+                        FluidListDivider()
+                        PickerRow(
+                            title = stringResource(R.string.settings_llm_model),
+                            selectedKey = state.llmModel,
+                            options = state.llmOptions.map { it to it },
+                            onSelected = { state.llmModel = it },
+                        )
+                    }
+                }
+                if (state.phase2 && state.preset == PromptPreset.CUSTOM) {
+                    FluidCard(glass = true) {
                         FluidTextField(
                             value = state.systemPrompt,
                             onValueChange = { state.systemPrompt = it },
@@ -280,7 +298,7 @@ internal fun KeyVoiceSetupScreen(
             }
         }
         item(key = "vocab-header") { FluidSectionHeader(stringResource(R.string.settings_vocab_title), detail = stringResource(R.string.settings_vocab_desc)) }
-        item(key = "vocab") {
+        item(key = "vocab-manual") {
             FluidCard(glass = true) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FluidTextField(
@@ -295,132 +313,118 @@ internal fun KeyVoiceSetupScreen(
                 if (state.manualTerms.isEmpty()) {
                     SecondaryText(stringResource(R.string.settings_vocab_manual_empty))
                 } else {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        state.manualTerms.take(VOCABULARY_PREVIEW_LIMIT).forEach { term ->
-                            val removeDescription = stringResource(R.string.settings_vocab_remove_term, term)
-                            FluidChip(
-                                label = "×  " + term,
-                                selected = false,
-                                onClick = { state.manualTerms.remove(term) },
-                                modifier = Modifier.semantics { contentDescription = removeDescription },
-                            )
-                        }
-                    }
-                    if (state.manualTerms.size > VOCABULARY_PREVIEW_LIMIT) {
-                        FluidButton(
-                            text = stringResource(R.string.settings_vocab_show_all, state.manualTerms.size),
-                            onClick = { vocabularySheet = VocabularySheet.Manual },
-                            style = FluidButtonStyle.Plain,
-                        )
-                    }
+                    TermChips(
+                        terms = state.manualTerms,
+                        onRemove = { state.manualTerms.remove(it) },
+                        onShowAll = { vocabularySheet = VocabularySheet.Manual },
+                    )
                 }
-                ToggleRow(
+            }
+        }
+        item(key = "vocab-learning") {
+            FluidListGroup(glass = true) {
+                FluidToggleRow(
                     title = stringResource(R.string.settings_auto_learning),
                     subtitle = stringResource(R.string.settings_auto_learning_description),
                     checked = state.autoLearning,
-                    onChecked = { state.autoLearning = it },
+                    onCheckedChange = { state.autoLearning = it },
                 )
+            }
+        }
+        item(key = "vocab-learned") {
+            FluidCard(glass = true) {
                 Text(stringResource(R.string.settings_vocab_learned), style = MaterialTheme.typography.titleSmall)
                 if (state.learnedTerms.isEmpty()) {
                     SecondaryText(stringResource(R.string.settings_vocab_learned_empty))
                 } else {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        state.learnedTerms.take(VOCABULARY_PREVIEW_LIMIT).forEach { term ->
-                            val removeDescription = stringResource(R.string.settings_vocab_remove_term, term)
-                            FluidChip(
-                                label = "×  " + term,
-                                selected = false,
-                                onClick = { onRemoveLearned(term) },
-                                modifier = Modifier.semantics { contentDescription = removeDescription },
-                            )
-                        }
-                    }
-                    if (state.learnedTerms.size > VOCABULARY_PREVIEW_LIMIT) {
-                        FluidButton(
-                            text = stringResource(R.string.settings_vocab_show_all, state.learnedTerms.size),
-                            onClick = { vocabularySheet = VocabularySheet.Learned },
-                            style = FluidButtonStyle.Plain,
-                        )
-                    }
+                    TermChips(
+                        terms = state.learnedTerms,
+                        onRemove = onRemoveLearned,
+                        onShowAll = { vocabularySheet = VocabularySheet.Learned },
+                    )
                     FluidButton(text = stringResource(R.string.settings_vocab_clear_learned), onClick = onClearLearned, style = FluidButtonStyle.Destructive)
                 }
             }
         }
         item(key = "behavior-header") { FluidSectionHeader(stringResource(R.string.settings_section_behavior)) }
-        item(key = "behavior") {
+        item(key = "behavior-duration") {
+            // Il cursore con il suo titolo e il valore: l'engine ha il cursore ma non (ancora) la riga
+            // che lo accompagna, quindi resta una scheda scritta qui.
+            val valueLabel = stringResource(R.string.settings_max_duration_value, state.duration)
             FluidCard(glass = true) {
                 Text(stringResource(R.string.settings_max_duration), style = MaterialTheme.typography.titleMedium)
-                SecondaryText(stringResource(R.string.settings_max_duration_value, state.duration))
+                SecondaryText(valueLabel)
                 FluidSlider(
                     value = state.duration.toFloat(),
                     onValueChange = { state.duration = it.toInt().coerceIn(30, 600) },
                     valueRange = 30f..600f,
                     modifier = Modifier.fillMaxWidth(),
+                    contentDescription = stringResource(R.string.settings_max_duration),
+                    stateDescription = valueLabel,
                 )
-                ToggleRow(
+            }
+        }
+        item(key = "behavior") {
+            FluidListGroup(glass = true) {
+                FluidToggleRow(
                     title = stringResource(R.string.settings_accessibility_dictation),
                     subtitle = stringResource(R.string.settings_accessibility_dictation_description_primary),
                     checked = state.accessibilityDictation,
-                    onChecked = { state.accessibilityDictation = it },
+                    onCheckedChange = { state.accessibilityDictation = it },
                 )
-                FluidButton(text = stringResource(R.string.settings_accessibility_reset_position), onClick = onResetBubble, style = FluidButtonStyle.Plain)
-                ToggleRow(
+                FluidListDivider()
+                FluidListRow(
+                    title = stringResource(R.string.settings_accessibility_reset_position),
+                    subtitle = "",
+                    onClick = onResetBubble,
+                    disclosure = false,
+                )
+                FluidListDivider()
+                FluidToggleRow(
                     title = stringResource(R.string.settings_haptic),
                     subtitle = stringResource(R.string.settings_haptic_description),
                     checked = state.haptic,
-                    onChecked = { state.haptic = it },
+                    onCheckedChange = { state.haptic = it },
                 )
             }
         }
         item(key = "keyboard-header") { FluidSectionHeader(stringResource(R.string.settings_section_keyboard_fallback), detail = stringResource(R.string.settings_keyboard_fallback_description)) }
         item(key = "keyboard") {
-            FluidCard(glass = true) {
-                ToggleRow(
+            FluidListGroup(glass = true) {
+                FluidToggleRow(
                     title = stringResource(R.string.settings_auto_start_recording),
                     subtitle = stringResource(R.string.settings_auto_start_recording_description_fallback),
                     checked = state.autoStartRecording,
-                    onChecked = { state.autoStartRecording = it },
+                    onCheckedChange = { state.autoStartRecording = it },
                 )
-                ToggleRow(
+                FluidListDivider()
+                FluidToggleRow(
                     title = stringResource(R.string.settings_preview_long_text),
                     subtitle = stringResource(R.string.settings_preview_long_text_description),
                     checked = state.previewLongText,
-                    onChecked = { state.previewLongText = it },
+                    onCheckedChange = { state.previewLongText = it },
                 )
-                ToggleRow(
+                FluidListDivider()
+                FluidToggleRow(
                     title = stringResource(R.string.settings_return_to_previous_keyboard),
                     subtitle = stringResource(R.string.settings_return_to_previous_keyboard_description),
                     checked = state.returnToPreviousKeyboard,
-                    onChecked = { state.returnToPreviousKeyboard = it },
+                    onCheckedChange = { state.returnToPreviousKeyboard = it },
                 )
             }
         }
-        item(key = "updates-header") { FluidSectionHeader(stringResource(R.string.settings_section_updates)) }
-        item(key = "updates") {
-            FluidCard(glass = true) {
-                Text(stringResource(R.string.update_current_version, BuildConfig.VERSION_NAME), style = MaterialTheme.typography.titleMedium)
-                SecondaryText(updateStatus(state))
-                state.availableUpdate?.let { update ->
-                    if (update.changelog.isNotBlank()) SecondaryText(update.changelog)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FluidButton(
-                            text = stringResource(R.string.update_action_install),
-                            onClick = onInstallUpdate,
-                            enabled = !state.installState.isBusy() && state.installState !is AppUpdateInstallState.Installed,
-                        )
-                        FluidButton(text = stringResource(R.string.update_action_later), onClick = onLaterUpdate, style = FluidButtonStyle.Tinted)
-                    }
-                    FluidButton(text = stringResource(R.string.update_action_ignore), onClick = onIgnoreUpdate, style = FluidButtonStyle.Plain)
-                }
-                FluidButton(
-                    text = stringResource(R.string.update_action_check),
-                    onClick = onCheckUpdate,
-                    enabled = !state.checkingUpdate && !state.installState.isBusy(),
-                    loading = state.checkingUpdate,
-                    style = FluidButtonStyle.Tinted,
-                )
-            }
-        }
+        // Gli aggiornamenti li scrive l'engine: versione, "controllato N minuti fa", il tasto che da
+        // "Controlla ora" diventa "Installa la X", la barra dentro il gruppo e "Salta questa versione".
+        // Quando e' KeyVoice a decidere (ogni quante ore controllare, la notifica) sta nel coordinatore.
+        fluidUpdateSection(
+            state = state.updateState,
+            onCheck = onCheckUpdate,
+            onInstall = onInstallUpdate,
+            currentVersion = BuildConfig.VERSION_NAME,
+            lastCheckedAtMillis = state.lastUpdateCheckMillis,
+            onSkip = onIgnoreUpdate,
+            glass = true,
+        )
         item(key = "save") {
             FluidButton(
                 text = stringResource(R.string.settings_save),
@@ -429,7 +433,16 @@ internal fun KeyVoiceSetupScreen(
                 leading = { Icon(Icons.Rounded.Check, contentDescription = null) },
             )
         }
+        // Le opere di altri che l'APK porta con se' e la licenza dell'app (GPL-3.0 dalla 3.0 dell'engine).
+        fluidLicensesSection()
     }
+    // L'avviso a foglio si apre solo se si arriva dalla notifica: stato nullo, foglio chiuso.
+    FluidUpdatePromptSheet(
+        state = if (state.updatePromptRequested) state.updateState else null,
+        onInstall = onInstallUpdate,
+        onLater = onLaterUpdate,
+        onSkip = onIgnoreUpdate,
+    )
     FluidGlassModalPortal(
         item = vocabularySheet,
         onDismissRequest = { vocabularySheet = null },
@@ -440,32 +453,36 @@ internal fun KeyVoiceSetupScreen(
         ),
     ) { sheet ->
         val terms = if (sheet == VocabularySheet.Manual) state.manualTerms else state.learnedTerms
-        Text(
-            text = stringResource(
+        FluidSheetScaffold(
+            title = stringResource(
                 if (sheet == VocabularySheet.Manual) R.string.settings_vocab_manual
                 else R.string.settings_vocab_learned
             ),
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.titleLarge,
-        )
-        LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
-            items(terms, key = { it }) { term ->
-                FluidListRow(
-                    title = term,
-                    subtitle = "",
-                    disclosure = false,
-                    badge = {
-                        FluidButton(
-                            text = stringResource(R.string.settings_vocab_remove),
-                            onClick = {
-                                if (sheet == VocabularySheet.Manual) state.manualTerms.remove(term)
-                                else onRemoveLearned(term)
-                            },
-                            style = FluidButtonStyle.Plain,
-                        )
-                    },
-                )
-                FluidListDivider()
+            // La lista scorre da sola: un LazyColumn dentro un corpo che scorre non ha un'altezza.
+            scrollable = false,
+        ) {
+            LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
+                items(terms, key = { it }) { term ->
+                    FluidListRow(
+                        title = term,
+                        subtitle = "",
+                        disclosure = false,
+                        badge = {
+                            // Un "Rimuovi" per riga di una lista che scorre: non c'e' un fuori da cui
+                            // partire, quindi il tasto cede il dito alla lista.
+                            FluidButton(
+                                text = stringResource(R.string.settings_vocab_remove),
+                                onClick = {
+                                    if (sheet == VocabularySheet.Manual) state.manualTerms.remove(term)
+                                    else onRemoveLearned(term)
+                                },
+                                style = FluidButtonStyle.Plain,
+                                grip = FluidPressGrip.YieldsToScroll,
+                            )
+                        },
+                    )
+                    FluidListDivider()
+                }
             }
         }
     }
@@ -476,35 +493,79 @@ private const val VOCABULARY_PREVIEW_LIMIT = 12
 
 private enum class VocabularySheet { Manual, Learned }
 
+/** Le parole in anteprima come chip che si tolgono con un tocco, e "Mostra tutte" quando sono tante. */
 @Composable
-private fun ChoiceRow(
+private fun TermChips(
+    terms: List<String>,
+    onRemove: (String) -> Unit,
+    onShowAll: () -> Unit,
+) {
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        terms.take(VOCABULARY_PREVIEW_LIMIT).forEach { term ->
+            val removeDescription = stringResource(R.string.settings_vocab_remove_term, term)
+            FluidChip(
+                label = "×  " + term,
+                selected = false,
+                onClick = { onRemove(term) },
+                modifier = Modifier.semantics { contentDescription = removeDescription },
+            )
+        }
+    }
+    if (terms.size > VOCABULARY_PREVIEW_LIMIT) {
+        FluidButton(
+            text = stringResource(R.string.settings_vocab_show_all, terms.size),
+            onClick = onShowAll,
+            style = FluidButtonStyle.Plain,
+        )
+    }
+}
+
+/** Cio' che il selettore sta mostrando: preso all'apertura, cosi' il foglio esce intero. */
+private data class PickerPanel(
+    val title: String,
+    val options: List<Pair<String, String>>,
+    val selectedKey: String,
+)
+
+/**
+ * Una riga che mostra il valore scelto e, al tocco, diventa il pannello con le alternative
+ * (`FluidChoiceRow` con la spunta a destra, e un corpo che scorre per i cataloghi lunghi).
+ *
+ * L'engine non ha ancora una riga-selettore: questa e' la forma che le regole chiedono — il portale
+ * a `item`, con l'origine della riga —, non il portale a booleano che c'era prima.
+ */
+@Composable
+private fun PickerRow(
     title: String,
-    selected: String,
+    selectedKey: String,
     options: List<Pair<String, String>>,
     onSelected: (String) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    Box {
-        FluidListRow(title = title, subtitle = selected, onClick = { expanded = true })
-        FluidGlassModalPortal(
-            visible = expanded,
-            onDismissRequest = { expanded = false },
-            presentation = FluidGlassModalPresentation.Sheet,
-            paneTitle = title,
-        ) {
-            FluidListGroup {
-                options.forEachIndexed { index, (key, label) ->
+    var panel by remember { mutableStateOf<PickerPanel?>(null) }
+    var origin by remember { mutableStateOf<Rect?>(null) }
+    val selectedLabel = options.firstOrNull { it.first == selectedKey }?.second ?: selectedKey
+    FluidListRow(
+        title = title,
+        subtitle = selectedLabel,
+        modifier = Modifier.fluidExpandOrigin { origin = it },
+        onClick = { panel = PickerPanel(title, options, selectedKey) },
+    )
+    FluidGlassModalPortal(
+        item = panel,
+        onDismissRequest = { panel = null },
+        origin = { origin },
+        paneTitle = title,
+    ) { shown ->
+        FluidSheetScaffold(title = shown.title, insetBottom = false) {
+            FluidListGroup(modifier = Modifier.selectableGroup()) {
+                shown.options.forEachIndexed { index, (key, label) ->
                     if (index > 0) FluidListDivider()
-                    FluidListRow(
+                    FluidChoiceRow(
                         title = label,
-                        subtitle = "",
-                        disclosure = false,
-                        badge = if (label == selected) {
-                            { FluidStatusBadge(stringResource(R.string.settings_choice_selected), tone = FluidTone.Success) }
-                        } else null,
-                        onClick = {
+                        selected = key == shown.selectedKey,
+                        onSelect = {
                             onSelected(key)
-                            expanded = false
+                            panel = null
                         },
                     )
                 }
@@ -514,37 +575,6 @@ private fun ChoiceRow(
 }
 
 @Composable
-private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .toggleable(value = checked, role = Role.Switch, onValueChange = onChecked)
-            .padding(vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            SecondaryText(subtitle)
-        }
-        FluidSwitch(checked = checked, onCheckedChange = null)
-    }
-}
-
-@Composable
 private fun SecondaryText(text: String) {
     Text(text = text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-}
-
-@Composable
-private fun updateStatus(state: SetupState): String {
-    return when (val install = state.installState) {
-        is AppUpdateInstallState.Downloading -> stringResource(R.string.update_install_downloading, (install.progress * 100).toInt().coerceIn(0, 100))
-        is AppUpdateInstallState.Verifying -> install.message
-        is AppUpdateInstallState.AwaitingUserAction -> install.message
-        is AppUpdateInstallState.Installing -> install.message
-        is AppUpdateInstallState.Installed -> stringResource(R.string.update_install_installed)
-        is AppUpdateInstallState.Error -> install.message
-        null -> state.updateMessage.ifBlank { stringResource(R.string.update_status_idle) }
-    }
 }
