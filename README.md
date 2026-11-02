@@ -112,7 +112,7 @@ La durata massima e' configurabile. Il default e' 3 minuti, sotto il limite tipi
 - `MediaRecorder`
 - Retrofit + OkHttp
 - `EncryptedSharedPreferences`
-- Fluid Engine 2.7.1 e Jetpack Compose per dashboard e impostazioni
+- Fluid Engine 3.0.0 e Jetpack Compose per dashboard e impostazioni
 - View/XML per la finestra IME e il pannello del servizio accessibilita
 
 ### Architettura
@@ -141,4 +141,17 @@ com.keyvoice.app/
 
 ## Licenza
 
-Questo progetto e' distribuito con licenza MIT.
+KeyVoice e' software libero: si distribuisce sotto la **GNU General Public License, versione 3**
+(testo completo in [`LICENSE`](LICENSE)). Chi riceve l'APK ha diritto ai sorgenti, che sono questo
+repository: <https://github.com/Casual76/KeyVoice>. Si possono leggere, modificare e ridistribuire
+alle condizioni della GPL-3.0, con la stessa licenza.
+
+**Perche' GPL-3.0.** Dalla 3.0 il Fluid Engine contiene codice di
+[LibrePods](https://github.com/librepods-org/librepods) (GPL-3.0): il comportamento dei pulsanti e delle
+pagine non e' piu' riscritto, e' portato. Un'app che distribuisce l'engine e' un'opera derivata, e va
+distribuita con la stessa licenza. E' la regola di tutte le app Pampa che usano l'engine. Fino alla 1.2.16
+(engine 2.13 e precedenti) il README dichiarava la licenza MIT; da questa versione la licenza e' la GPL-3.0.
+
+Le opere di altri che l'APK porta con se' (il vetro di Kyant, Apache-2.0; i caratteri Inter, SIL OFL 1.1;
+LibrePods) sono elencate in fondo alla dashboard dell'app, sotto **Licenze e crediti**, con gli avvisi che le
+loro licenze chiedono; i testi sono in [`engine/LICENSES/`](engine/LICENSES).
