@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Check
@@ -106,9 +106,10 @@ internal fun KeyVoiceSetupScreen(
             )
         },
     ) {
-        // Lo stato della configurazione: una frase con un'icona, verde se si puo' dettare e ambra
-        // finche' manca qualcosa. Era un FluidHeroCard (deprecato dalla 2.13): quello e' un riquadro
-        // che dice una cosa, e questo e' esattamente il suo successore.
+        // Lo stato della configurazione: una frase con l'icona del microfono nella piastrella.
+        // Era un FluidHeroCard (deprecato dalla 2.13): quello era un riquadro che dice una cosa, e
+        // questo e' il suo successore. Il tono e' quello primario, come l'accento del vecchio riquadro:
+        // verde per "pronto" e ambra per "manca qualcosa" sarebbe una scelta di aspetto (vedi report).
         item(key = "hero") {
             FluidInlineMessage(
                 title = stringResource(if (ready) R.string.setup_wizard_title_ready else R.string.setup_wizard_title),
@@ -119,7 +120,7 @@ internal fun KeyVoiceSetupScreen(
                         else -> R.string.setup_wizard_status_ready
                     }
                 ),
-                tone = if (ready) FluidTone.Success else FluidTone.Warning,
+                tone = FluidTone.Primary,
                 leading = { Icon(Icons.Rounded.Mic, contentDescription = null) },
             )
         }
@@ -176,6 +177,8 @@ internal fun KeyVoiceSetupScreen(
                     secret = true,
                 )
                 if (largeText) {
+                    // A testo grande i due tasti stanno uno sopra l'altro a tutta larghezza: la pagina
+                    // scorre da qui solo se i tasti cedono il dito (a 200% sono lunghi tratti di pagina).
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         FluidButton(
                             text = stringResource(R.string.settings_api_key_test),
@@ -183,12 +186,14 @@ internal fun KeyVoiceSetupScreen(
                             enabled = !state.testingApiKey,
                             loading = state.testingApiKey,
                             fillWidth = true,
+                            grip = FluidPressGrip.YieldsToScroll,
                         )
                         FluidButton(
                             text = stringResource(R.string.setup_open_groq),
                             onClick = onOpenGroq,
                             style = FluidButtonStyle.Tinted,
                             fillWidth = true,
+                            grip = FluidPressGrip.YieldsToScroll,
                         )
                     }
                 } else {
@@ -377,7 +382,6 @@ internal fun KeyVoiceSetupScreen(
                     title = stringResource(R.string.settings_accessibility_reset_position),
                     subtitle = "",
                     onClick = onResetBubble,
-                    disclosure = false,
                 )
                 FluidListDivider()
                 FluidToggleRow(
@@ -430,6 +434,8 @@ internal fun KeyVoiceSetupScreen(
                 text = stringResource(R.string.settings_save),
                 onClick = onSave,
                 fillWidth = true,
+                // A tutta larghezza non c'e' un "fuori" da cui far partire lo scorrimento.
+                grip = FluidPressGrip.YieldsToScroll,
                 leading = { Icon(Icons.Rounded.Check, contentDescription = null) },
             )
         }
@@ -461,27 +467,31 @@ internal fun KeyVoiceSetupScreen(
             // La lista scorre da sola: un LazyColumn dentro un corpo che scorre non ha un'altezza.
             scrollable = false,
         ) {
-            LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
-                items(terms, key = { it }) { term ->
-                    FluidListRow(
-                        title = term,
-                        subtitle = "",
-                        disclosure = false,
-                        badge = {
-                            // Un "Rimuovi" per riga di una lista che scorre: non c'e' un fuori da cui
-                            // partire, quindi il tasto cede il dito alla lista.
-                            FluidButton(
-                                text = stringResource(R.string.settings_vocab_remove),
-                                onClick = {
-                                    if (sheet == VocabularySheet.Manual) state.manualTerms.remove(term)
-                                    else onRemoveLearned(term)
-                                },
-                                style = FluidButtonStyle.Plain,
-                                grip = FluidPressGrip.YieldsToScroll,
-                            )
-                        },
-                    )
-                    FluidListDivider()
+            // Le righe stanno in un gruppo, come le alternative dei selettori: i bordi si allineano
+            // alla testata del foglio e il vetro e' uno solo.
+            FluidListGroup {
+                LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
+                    itemsIndexed(terms, key = { _, term -> term }) { index, term ->
+                        if (index > 0) FluidListDivider()
+                        FluidListRow(
+                            title = term,
+                            subtitle = "",
+                            disclosure = false,
+                            badge = {
+                                // Un "Rimuovi" per riga di una lista che scorre: non c'e' un fuori da cui
+                                // partire, quindi il tasto cede il dito alla lista.
+                                FluidButton(
+                                    text = stringResource(R.string.settings_vocab_remove),
+                                    onClick = {
+                                        if (sheet == VocabularySheet.Manual) state.manualTerms.remove(term)
+                                        else onRemoveLearned(term)
+                                    },
+                                    style = FluidButtonStyle.Plain,
+                                    grip = FluidPressGrip.YieldsToScroll,
+                                )
+                            },
+                        )
+                    }
                 }
             }
         }
