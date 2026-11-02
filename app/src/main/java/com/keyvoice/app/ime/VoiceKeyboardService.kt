@@ -12,7 +12,6 @@ import android.text.InputType
 import android.util.Log
 import android.view.ContextThemeWrapper
 import android.view.Gravity
-import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.inputmethod.ExtractedTextRequest
@@ -33,6 +32,8 @@ import com.keyvoice.app.settings.DictationHistoryStore
 import com.keyvoice.app.settings.PreferencesManager
 import com.keyvoice.app.update.KeyVoiceUpdateCoordinator
 import com.keyvoice.app.ui.KeyboardViewController
+import dev.antigravity.fluidengine.ui.haptics.FluidHapticEvent
+import dev.antigravity.fluidengine.ui.haptics.fluidHapticsFor
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,6 +58,13 @@ class VoiceKeyboardService : InputMethodService() {
     }
 
     private lateinit var prefs: PreferencesManager
+
+    /**
+     * La vibrazione della tastiera, dal vocabolario dell'engine invece di una costante di sistema.
+     * Una sola istanza per il servizio (tiene le reti di sicurezza dell'engine) e l'interruttore
+     * "Feedback aptico" della dashboard letto a ogni evento.
+     */
+    private val haptics by lazy { fluidHapticsFor(this, enabled = { prefs.hapticFeedback }) }
     private lateinit var audioRecorder: AudioRecorder
     private lateinit var refinementRepo: RefinementRepository
     private lateinit var dictationPipeline: DictationPipeline
@@ -137,9 +145,8 @@ class VoiceKeyboardService : InputMethodService() {
         controller.btnMic.setOnClickListener {
             cancelAutoStart()
             cancelAutoReturn()
-            if (prefs.hapticFeedback) {
-                it.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-            }
+            // L'interruttore dell'app e' letto a ogni colpo (vedi `haptics`): spento, non suona.
+            haptics.play(FluidHapticEvent.Tap)
             handleMicClick()
         }
 
