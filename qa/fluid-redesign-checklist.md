@@ -55,3 +55,17 @@ Questa lista accompagna la migrazione della dashboard a Fluid Engine 2.7.1. Una 
 - [x] Migrazione della vecchia chiave in chiaro: verificata manualmente su Pampa_Tablet API 35 con un valore fittizio e riavvio offline; file precedente eliminato. Due test strumentali isolati verificano inoltre chiave e cronologia fittizie, rimozione del vecchio file e assenza del valore in chiaro nel file cifrato (`OK (2 tests)`). Pacchetti di prova rimossi e AVD arrestato.
 - [ ] Aggiornamenti: disponibile, ignora, rimanda, download, verifica, installazione e errore.
 - [ ] Prova su dispositivo fisico Android 13+ con registrazione audio reale. La revisione automatica aveva respinto il tap su Verifica API Key; il 27/09/2026 l'utente ha autorizzato l'invio della sola chiave API, e la verifica live del catalogo e riuscita sul Samsung. L'audio non e autorizzato all'invio a Groq.
+
+## Migrazione a Fluid Engine 3.0.0 (KeyVoice 1.3.0)
+
+Prove sull'emulatore Medium_Phone (1080x2400, 420 dpi); gli screenshot prima/dopo sono in `fluid-engine/artifacts/migrazione/keyvoice/`.
+
+- [x] `engine-doctor.ps1` verde, `:app:testDebugUnitTest` (42 test, 4 nuovi in `KeyVoiceUpdateUiTest`) e `:app:assembleRelease` firmato con `pampa.jks`.
+- [x] Dashboard chiara e scura, scorrimento completo: gruppi di vetro al posto delle card con interruttori, sezione aggiornamenti dell'engine, crediti e GPL-3.0 in fondo.
+- [x] Selettori (lingua, modelli, preset) come popover che nasce dalla riga, con la spunta a destra; scelta e sottotitolo aggiornato.
+- [x] Preset Personalizzato: la scheda del prompt compare sotto il gruppo.
+- [x] Vocabolario con 14 parole in bozza: 12 chip di vetro, "Mostra tutte", foglio scorrevole; "Rimuovi" cede il dito alla lista.
+- [x] Testo al 200%: la pagina scorre anche partendo dai tasti a tutta larghezza.
+- [x] Aggiornamenti con una versione piu' alta di quella installata (build di prova 1.2.0): riga "Installa la 1.2.16", avviso a foglio dalla notifica, "Piu' tardi", "Salta questa versione", errore e "Riprova". L'installazione vera si ferma alla finestra "Installa app sconosciute" di Android: non provata fino in fondo.
+- [x] Tastiera: si apre, "Tocca per parlare", il tocco sul microfono suona `Tap` dall'engine e rispetta l'interruttore "Feedback aptico" (acceso vibra, spento no, verificato con `dumpsys vibrator_manager`); senza permesso microfono mostra l'errore.
+- [ ] Solo sul telefono: la luce del dito sui tasti, la goccia dei popover e i tasti che tengono il dito (la coppia "Verifica API Key"/"Apri Groq" a meta' larghezza), il peso dei 24 chip di vetro sul Tab S9, TalkBack.
