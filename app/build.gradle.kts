@@ -19,8 +19,8 @@ android {
         applicationId = "com.keyvoice.app"
         minSdk = 33
         targetSdk = 35
-        versionCode = 23
-        versionName = "1.2.16"
+        versionCode = 24
+        versionName = "1.3.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
