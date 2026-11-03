@@ -15,22 +15,30 @@
       "ref": "main"
     },
     "stable": {
-      "version": "1.2.16",
-      "releaseDate": "2026-10-13",
-      "changelog": "Il vetro dell'app è aggiornato (Fluid Engine 2.13.0). I pannelli grandi sono più sfocati e piegano di più la luce ai bordi, e un vetro sopra un altro vetro lo sfoca invece di lasciar vedere la pagina nitida. I pulsanti si possono tenere premuti e trascinare senza che la pagina scorra, e interruttori e cursori non la fanno più scorrere mentre li muovi. Il cursore della durata massima è nuovo: una pillola bianca che sotto il dito diventa una lente.",
-      "releaseTag": "stable-keyvoice-v1.2.16",
-      "apkAsset": "keyvoice-1.2.16.apk",
-      "sizeBytes": 6803541
+      "version": "1.3.0",
+      "releaseDate": "2026-11-03",
+      "changelog": "Dashboard sul Fluid Engine 3: righe e selettori di vetro, chiave Groq nascosta con l'occhio, vocabolario in un foglio, aggiornamenti integrati. Licenza GPL-3.0.",
+      "releaseTag": "stable-keyvoice-v1.3.0",
+      "apkAsset": "keyvoice-1.3.0.apk",
+      "sizeBytes": 6976026
     },
     "beta": {
-      "version": "1.2.16",
-      "releaseDate": "2026-10-13",
-      "changelog": "Il vetro dell'app è aggiornato (Fluid Engine 2.13.0). I pannelli grandi sono più sfocati e piegano di più la luce ai bordi, e un vetro sopra un altro vetro lo sfoca invece di lasciar vedere la pagina nitida. I pulsanti si possono tenere premuti e trascinare senza che la pagina scorra, e interruttori e cursori non la fanno più scorrere mentre li muovi. Il cursore della durata massima è nuovo: una pillola bianca che sotto il dito diventa una lente.",
-      "releaseTag": "stable-keyvoice-v1.2.16",
-      "apkAsset": "keyvoice-1.2.16.apk",
-      "sizeBytes": 6803541
+      "version": "1.3.0",
+      "releaseDate": "2026-11-03",
+      "changelog": "Dashboard sul Fluid Engine 3: righe e selettori di vetro, chiave Groq nascosta con l'occhio, vocabolario in un foglio, aggiornamenti integrati. Licenza GPL-3.0.",
+      "releaseTag": "stable-keyvoice-v1.3.0",
+      "apkAsset": "keyvoice-1.3.0.apk",
+      "sizeBytes": 6976026
     },
     "history": [
+      {
+        "version": "1.2.16",
+        "releaseDate": "2026-10-13",
+        "changelog": "Il vetro dell'app è aggiornato (Fluid Engine 2.13.0). I pannelli grandi sono più sfocati e piegano di più la luce ai bordi, e un vetro sopra un altro vetro lo sfoca invece di lasciar vedere la pagina nitida. I pulsanti si possono tenere premuti e trascinare senza che la pagina scorra, e interruttori e cursori non la fanno più scorrere mentre li muovi. Il cursore della durata massima è nuovo: una pillola bianca che sotto il dito diventa una lente.",
+        "releaseTag": "stable-keyvoice-v1.2.16",
+        "apkAsset": "keyvoice-1.2.16.apk",
+        "sizeBytes": 6803541
+      },
       {
         "version": "1.2.15",
         "releaseDate": "2026-09-27",
